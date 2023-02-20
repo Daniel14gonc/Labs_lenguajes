@@ -5,7 +5,7 @@ from AFN import AFN
 # regex = Regex('a|b*c?d*ef')
 # regex = Regex('a|b*')
 # regex = Regex('a|b*c')
-regex = Regex('ab')
+regex = Regex('(a|b)')
 regex.to_posfix()
 
 afn = AFN(regex)

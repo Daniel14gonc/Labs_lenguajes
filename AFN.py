@@ -9,7 +9,10 @@ class AFN(AF):
 
     
     def build_afn(self):
-        self.build_helper(self.root)
+        first, last = self.build_helper(self.root)
+        self.initial.add(first)
+        self.final.add(last)
+        print(self.initial, self.final, self.transitions, self.alphabet)
     
     def get_symbol_index(self, symbol):
         for i in range(len(self.alphabet)):
@@ -19,9 +22,9 @@ class AFN(AF):
     def build_helper(self, node):
         res = ""
         if node:
-            print(node.value)
             if node.value == '*':
-                res += self.build_helper(node.left_child)
+                child = self.build_helper(node.left_child)
+                return self.create_kleene(child)
             elif node.value == '+':
                 res += self.build_helper(node.left_child)
             elif node.value == '?':
@@ -29,11 +32,46 @@ class AFN(AF):
             elif node.value in '|.':
                 left = self.build_helper(node.left_child)
                 right = self.build_helper(node.right_child)
-                self.create_concatenation(node, left, right)
+                if node.value == '|':
+                    return self.create_or(left, right)
+                else:
+                    return self.create_concatenation(left, right)
             else:
                 return self.create_unit(node)
+    
+    def create_kleene(self, child):
+        first = self.count
+        self.count += 1
+        last = self.count
+        self.count += 1
+
+        self.build_matrix_entry(first)
+        self.build_matrix_entry(last)
+
+        self.create_transition(first, child[0], 'ε')
+        self.create_transition(first, last, 'ε')
+        self.create_transition(child[1], child[0], 'ε')
+        self.create_transition(child[1], last, 'ε')
         
-    def create_concatenation(self, node, left, right):
+        return first, last
+    
+    def create_or(self, left, right):
+        first = self.count
+        self.count += 1
+        last = self.count
+        self.count += 1
+
+        self.build_matrix_entry(first)
+        self.build_matrix_entry(last)
+
+        self.create_transition(first, left[0], 'ε')
+        self.create_transition(first, right[0], 'ε')
+        self.create_transition(left[1], last, 'ε')
+        self.create_transition(right[1], last, 'ε')
+
+        return first, last
+
+    def create_concatenation(self, left, right):
         symbol = 'ε'
         self.create_transition(left[1], right[0], symbol)
         return left[0], right[1]
