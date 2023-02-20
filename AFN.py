@@ -4,10 +4,8 @@ class AFN(AF):
 
     def __init__(self, regex=None) -> None:
         super().__init__(regex)
-        self.root = self.regex.root
+        self.root = self.regex.get_root()
         self.build_afn()
-        self.visual_graph.set_AF(self)
-        self.visual_graph.build_graph()
 
     
     def build_afn(self):
@@ -98,3 +96,10 @@ class AFN(AF):
     def build_matrix_entry(self, state):
         entry = [set() for element in self.alphabet]
         self.transitions[state] = entry
+
+    def output_image(self, path=None):
+        if not path:
+            path = "AFN"
+        self.create_AFvisual(path)
+        self.visual_graph.set_AF(self)
+        self.visual_graph.build_graph()

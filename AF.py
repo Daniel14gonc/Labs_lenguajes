@@ -8,4 +8,6 @@ class AF(object):
         self.transitions = {}
         self.initial_states = set()
         self.acceptance_states = set()
-        self.visual_graph = AFVisual()
+    
+    def create_AFvisual(self, path):
+        self.visual_graph = AFVisual(path)

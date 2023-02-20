@@ -2,8 +2,8 @@ import graphviz
 
 class AFVisual(object):
 
-    def __init__(self) -> None:
-        self.visual_graph = graphviz.Digraph(format='png', graph_attr={'rankdir':'LR'})
+    def __init__(self, path) -> None:
+        self.visual_graph = graphviz.Digraph(format='png', graph_attr={'rankdir':'LR'}, name=path)
         self.visual_graph.node('fake', style='invisible')
     
     def set_AF(self, AF):
