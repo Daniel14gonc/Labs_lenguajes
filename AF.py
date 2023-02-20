@@ -1,8 +1,11 @@
+from AFVisual import AFVisual
+
 class AF(object):
     def __init__(self, regex = None) -> None:
         self.regex = regex
         self.alphabet = regex.alphabet
         self.count = 1
         self.transitions = {}
-        self.initial = set()
-        self.final = set()
+        self.initial_states = set()
+        self.acceptance_states = set()
+        self.visual_graph = AFVisual()

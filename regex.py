@@ -12,7 +12,6 @@ class Regex(object):
         self.expression = re.sub(whitespace, "", self.expression)
         self.create_alphabet()
         self.add_concatenation_symbol()
-        print(self.expression)
     
     def create_alphabet(self):
         for element in self.expression:
@@ -38,7 +37,19 @@ class Regex(object):
         new_node = Node(operand)
         if operand in '*+?':
             o1 = stack.pop()
-            new_node.set_left_child(o1)
+            if operand == '+':
+                new_node.value = '.'
+                new_node.set_left_child(o1)
+                kleene_node = Node('*')
+                kleene_node.set_left_child(o1)
+                new_node.set_right_child(kleene_node)
+            elif operand == '?':
+                new_node.value = '|'
+                new_node.set_left_child(o1)
+                epsilon_node = Node('ε')
+                new_node.set_right_child(epsilon_node)
+            else:
+                new_node.set_left_child(o1)
         else:
             o2 = stack.pop()
             o1 = stack.pop()
@@ -78,11 +89,12 @@ class Regex(object):
             output_stack = self.build_tree(pop_element, output_stack)
             output += pop_element
 
-        print(output.replace('?', 'ε|'))
+        # print(output.replace('?', 'ε|'))
         self.root = output_stack.pop()
+        # print(self.postorder())
 
     def postorder(self):
-        print(self.postorder_helper(self.root).replace('?', 'ε|'))
+        return self.postorder_helper(self.root)
         
 
     def postorder_helper(self, node):

@@ -6,13 +6,14 @@ class AFN(AF):
         super().__init__(regex)
         self.root = self.regex.root
         self.build_afn()
+        self.visual_graph.set_AF(self)
+        self.visual_graph.build_graph()
 
     
     def build_afn(self):
         first, last = self.build_helper(self.root)
-        self.initial.add(first)
-        self.final.add(last)
-        print(self.initial, self.final, self.transitions, self.alphabet)
+        self.initial_states.add(first)
+        self.acceptance_states.add(last)
     
     def get_symbol_index(self, symbol):
         for i in range(len(self.alphabet)):
@@ -74,6 +75,7 @@ class AFN(AF):
     def create_concatenation(self, left, right):
         symbol = 'ε'
         self.create_transition(left[1], right[0], symbol)
+
         return left[0], right[1]
 
     def create_unit(self, node):
@@ -89,9 +91,9 @@ class AFN(AF):
 
         return first, last
     
-    def create_transition(self, initial, final, symbol):
+    def create_transition(self, initial_states, acceptance_states, symbol):
         symbol_index = self.get_symbol_index(symbol)
-        self.transitions[initial][symbol_index].add(final)
+        self.transitions[initial_states][symbol_index].add(acceptance_states)
 
     def build_matrix_entry(self, state):
         entry = [set() for element in self.alphabet]
