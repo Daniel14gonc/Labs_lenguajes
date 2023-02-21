@@ -71,10 +71,17 @@ class AFN(AF):
         return first, last
 
     def create_concatenation(self, left, right):
-        symbol = 'ε'
-        self.create_transition(left[1], right[0], symbol)
+        self.replace_transitions(right[0], left[1])
 
         return left[0], right[1]
+    
+    def replace_transitions(self, old_state, new_state):
+        new_state_transitions = self.transitions[new_state]
+        
+        for i in range(len(self.transitions[old_state])):
+            new_state_transitions[i] = new_state_transitions[i].union(self.transitions[old_state][i])
+        
+        self.transitions.pop(old_state)
 
     def create_unit(self, node):
         symbol = node.value

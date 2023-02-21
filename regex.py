@@ -1,22 +1,32 @@
 import re
 from Node import Node
 from AST import AST
+from RegexErrorChecker import RegexErrorChecker
 
 class Regex(object):
     def __init__(self, expression) -> None:
         self.alphabet = ['ε']
         self.operators = {'.', '|', '*', '+', '?'}
         self.binarios = {'|'}
+        self.error_checker = RegexErrorChecker(expression)
         self.expression = expression
-        # self.expression = self.expression.replace('?', '|ε')
+
+        if '.' in expression:
+            error = "Error in expression. Cannot enter '.' as concatenation operator."
+            self.error_checker.add_error(error)
+            raise Exception(self.error_checker.get_error_result())
+        
         whitespace = r"\s+"
         self.expression = re.sub(whitespace, "", self.expression)
         self.AST = AST()
         self.create_alphabet()
         self.add_concatenation_symbol()
-        self.check_expression()
+        self.error_checker.check_errors(self.expression, self.alphabet)
         self.build_AST()
-    
+
+        if self.error_checker.get_size() > 0:
+            raise Exception(self.error_checker.get_error_result())
+
     def create_alphabet(self):
         for element in self.expression:
             if element not in self.operators and element not in '()':
@@ -35,86 +45,46 @@ class Regex(object):
             else:
                 new_expression += self.expression[i]
         self.expression = new_expression
-    
-    def check_expression(self):
-        binary_operators = '.|'
-        unary_operators = '?*+'
 
-        for i in range(len(self.expression)):
-            if i + 1 < len(self.expression):
-                current = self.expression[i]
-                next = self.expression[i + 1]
-                if current in binary_operators and next in binary_operators:
-                    exception = f"Two binary operators cannot be sequential. At: {current + next}, string index {i}"
-                    raise Exception(exception)
-                if (current in binary_operators and next in unary_operators):
-                    exception = f"Binary operator cannot be followed by unary operator. At: {current + next}, string index {i}"
-                    raise Exception(exception)
-
-    def build_tree(self, operand, stack):
-        new_node = Node(operand)
-        if operand in '*+?':
-            o1 = stack.pop()
-            if operand == '+':
-                new_node.value = '.'
-                new_node.set_left_child(o1)
-                kleene_node = Node('*')
-                kleene_node.set_left_child(o1)
-                new_node.set_right_child(kleene_node)
-            elif operand == '?':
-                new_node.value = '|'
-                new_node.set_left_child(o1)
-                epsilon_node = Node('ε')
-                new_node.set_right_child(epsilon_node)
+    def build_tree(self, operator, stack):
+        new_node = Node(operator)
+        has_error = False
+        if operator in '*+?':
+            if not stack:
+                error = f"Unary operator {operator} is not applied to any symbol."
+                self.error_checker.add_error(error)
+                has_error = True
             else:
-                new_node.set_left_child(o1)
-        else:
-            o2 = stack.pop()
-            o1 = stack.pop()
-            new_node.set_left_child(o1)
-            new_node.set_right_child(o2)
-        
-        stack.append(new_node)
-        return stack
-
-    def otro(self):
-        output_stack = []
-        output = ""
-        operator_stack = []
-        operators = ".*+|?"
-        for element in self.expression:
-            if element in self.alphabet:
-                output_stack.append(Node(element))
-                output += element
-            elif element == '(':
-                operator_stack.append(element)
-            elif element == ')':
-                while operator_stack and operator_stack[-1] != '(':
-                    pop_element = operator_stack.pop()
-                    output_stack = self.build_tree(pop_element, output_stack)
-                    output += pop_element
-                if operator_stack and operator_stack[-1] == '(':
-                    operator_stack.pop()
+                o1 = stack.pop()
+                if operator == '+':
+                    new_node.value = '.'
+                    new_node.set_left_child(o1)
+                    kleene_node = Node('*')
+                    kleene_node.set_left_child(o1)
+                    new_node.set_right_child(kleene_node)
+                elif operator == '?':
+                    new_node.value = '|'
+                    new_node.set_left_child(o1)
+                    epsilon_node = Node('ε')
+                    new_node.set_right_child(epsilon_node)
                 else:
-                    raise Exception('Parenthesis not closed in regular expression.')
-            elif element in operators:
-                while operator_stack and operator_stack[-1] != '(' and self.precedence(element) <= self.precedence(operator_stack[-1]):
-                    pop_element = operator_stack.pop()
-                    output_stack = self.build_tree(pop_element, output_stack)
-                    output += pop_element
-                operator_stack.append(element)
+                    new_node.set_left_child(o1)
+        elif operator in '|.':
+            if not stack or len(stack) == 1:
+                error = f"Binary operator {operator} does not have the operators required."
+                self.error_checker.add_error(error)
+                has_error = True
+                if len(stack) == 1:
+                    stack.pop()
             else:
-                raise Exception('Symbol not in alphabet or operators')
-
-        while operator_stack:
-            pop_element = operator_stack.pop()
-            output_stack = self.build_tree(pop_element, output_stack)
-            output += pop_element
-
-        if not output_stack:
-            raise Exception('Regular expression not valid.')
-
-        return output.replace('?', 'ε|')
+                o2 = stack.pop()
+                o1 = stack.pop()
+                new_node.set_left_child(o1)
+                new_node.set_right_child(o2)
+        
+        if not has_error:
+            stack.append(new_node)
+        return stack
 
     def get_AST(self):
         return self.AST
@@ -135,29 +105,24 @@ class Regex(object):
                     pop_element = operator_stack.pop()
                     output_stack = self.build_tree(pop_element, output_stack)
                     output += pop_element
-                if operator_stack and operator_stack[-1] == '(':
+                if operator_stack :
                     operator_stack.pop()
-                else:
-                    raise Exception('Parenthesis not closed in regular expression.')
             elif element in operators:
                 while operator_stack and operator_stack[-1] != '(' and self.precedence(element) <= self.precedence(operator_stack[-1]):
                     pop_element = operator_stack.pop()
                     output_stack = self.build_tree(pop_element, output_stack)
                     output += pop_element
+                
                 operator_stack.append(element)
-            else:
-                raise Exception('Symbol not in alphabet or operators')
-
+            
         while operator_stack:
             pop_element = operator_stack.pop()
             output_stack = self.build_tree(pop_element, output_stack)
             output += pop_element
 
-        if not output_stack:
-            raise Exception('Regular expression not valid.')\
-        
-        root = output_stack.pop()
-        self.AST.set_root(root)
+        if output_stack:
+            root = output_stack.pop()
+            self.AST.set_root(root)
 
 
     def to_postfix(self):
