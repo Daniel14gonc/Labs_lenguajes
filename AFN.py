@@ -25,9 +25,8 @@ class AFN(AF):
                 child = self.build_helper(node.left_child)
                 return self.create_kleene(child)
             elif node.value == '+':
-                res += self.build_helper(node.left_child)
-            elif node.value == '?':
-                res += self.build_helper(node.left_child)
+                child = self.build_helper(node.left_child)
+                return self.create_positive_closure(child)
             elif node.value in '|.':
                 left = self.build_helper(node.left_child)
                 right = self.build_helper(node.right_child)
@@ -38,6 +37,22 @@ class AFN(AF):
             else:
                 return self.create_unit(node)
     
+    def create_positive_closure(self, child):
+        first = self.count
+        self.count += 1
+        last = self.count
+        self.count += 1
+
+        self.build_matrix_entry(first)
+        self.build_matrix_entry(last)
+
+        self.create_transition(first, child[0], 'ε')
+        self.create_transition(child[1], child[0], 'ε')
+        self.create_transition(child[1], last, 'ε')
+
+        return first, last
+
+
     def create_kleene(self, child):
         first = self.count
         self.count += 1

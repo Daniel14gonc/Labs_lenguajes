@@ -15,12 +15,17 @@ class Regex(object):
             error = "Error in expression. Cannot enter '.' as concatenation operator."
             self.error_checker.add_error(error)
             raise Exception(self.error_checker.get_error_result())
+        if not expression:
+            error = "Expression empty"
+            self.error_checker.add_error(error)
+            raise Exception(self.error_checker.get_error_result())
         
         whitespace = r"\s+"
         self.expression = re.sub(whitespace, "", self.expression)
         self.AST = AST()
         self.create_alphabet()
         self.add_concatenation_symbol()
+        self.idempotency()
         self.error_checker.check_errors(self.expression, self.alphabet)
         self.build_AST()
 
@@ -46,6 +51,22 @@ class Regex(object):
                 new_expression += self.expression[i]
         self.expression = new_expression
 
+    def idempotency(self):
+        self.idempotency_helper('*')
+        self.idempotency_helper('+')
+
+    def idempotency_helper(self, symbol):
+        last = ''
+        expression_list = list(self.expression)
+        for i in range(len(expression_list)):
+            if expression_list[i] == symbol and last == symbol:
+                last = symbol
+                expression_list[i] = ''
+            else: 
+                last = expression_list[i]
+
+        self.expression = ''.join(expression_list)
+
     def build_tree(self, operator, stack):
         new_node = Node(operator)
         has_error = False
@@ -56,13 +77,14 @@ class Regex(object):
                 has_error = True
             else:
                 o1 = stack.pop()
+                '''
                 if operator == '+':
                     new_node.value = '.'
                     new_node.set_left_child(o1)
                     kleene_node = Node('*')
                     kleene_node.set_left_child(o1)
-                    new_node.set_right_child(kleene_node)
-                elif operator == '?':
+                    new_node.set_right_child(kleene_node)'''
+                if operator == '?':
                     new_node.value = '|'
                     new_node.set_left_child(o1)
                     epsilon_node = Node('ε')
