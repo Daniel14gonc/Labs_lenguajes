@@ -1,6 +1,6 @@
-from AF import AF
+from FA import FA
 
-class AFN(AF):
+class NFA(FA):
 
     def __init__(self, regex=None) -> None:
         super().__init__(regex)
@@ -19,7 +19,6 @@ class AFN(AF):
                 return i
 
     def build_helper(self, node):
-        res = ""
         if node:
             if node.value == '*':
                 child = self.build_helper(node.left_child)

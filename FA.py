@@ -1,6 +1,6 @@
 from AFVisual import AFVisual
 
-class AF(object):
+class FA(object):
     def __init__(self, regex = None) -> None:
         self.regex = regex
         self.alphabet = regex.alphabet
