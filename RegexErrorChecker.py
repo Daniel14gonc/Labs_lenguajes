@@ -32,7 +32,12 @@ class RegexErrorChecker(object):
                         self.error_logs.append(error)
             elif element in self.alphabet:
                 string_between_parenthesis[-1] += element
+            
             i += 1
+
+        if stack:
+            error = f"Parenthesis mismatch."
+            self.error_logs.append(error)
 
     def check_sequence_operators(self):
         for i in range(len(self.expression)):

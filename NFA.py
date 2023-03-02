@@ -1,4 +1,5 @@
 from FA import FA
+from DFA import DFA
 
 class NFA(FA):
 
@@ -12,11 +13,6 @@ class NFA(FA):
         first, last = self.build_helper(self.root)
         self.initial_states.add(first)
         self.acceptance_states.add(last)
-    
-    def get_symbol_index(self, symbol):
-        for i in range(len(self.alphabet)):
-            if self.alphabet[i] == symbol:
-                return i
 
     def build_helper(self, node):
         if node:
@@ -109,6 +105,12 @@ class NFA(FA):
         self.create_transition(first, last, symbol)
 
         return first, last
+
+    def convert_to_DFA(self):
+        dfa = DFA()
+        dfa.build_from_NFA(self)
+        
+        return dfa
     
     def create_transition(self, initial_states, acceptance_states, symbol):
         symbol_index = self.get_symbol_index(symbol)
@@ -117,10 +119,3 @@ class NFA(FA):
     def build_matrix_entry(self, state):
         entry = [set() for element in self.alphabet]
         self.transitions[state] = entry
-
-    def output_image(self, path=None):
-        if not path:
-            path = "AFN"
-        self.create_AFvisual(path)
-        self.visual_graph.set_AF(self)
-        self.visual_graph.build_graph()
