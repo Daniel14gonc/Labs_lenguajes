@@ -1,9 +1,18 @@
 from FA import FA
+from ST import ST
 
 class DFA(FA):
 
     def __init__(self, regex=None) -> None:
         super().__init__(regex)
+        if regex:
+            self.build_direct()
+
+    def build_direct(self):
+        tree = ST(self.regex)
+        table = tree.get_followpos_table()
+        
+
 
     def build_from_NFA(self, NFA):
         self.regex = NFA.regex
