@@ -11,7 +11,6 @@ class ST(AST):
         self.build_tree()
         self.count = 1
         self.post_order_assignment()
-        print(self.follow_pos)
     
     def post_order_assignment(self):
         self.assignment_helper(self.root)
@@ -73,8 +72,6 @@ class ST(AST):
                 node.last_pos.add(node.number)
                 self.follow_pos[(node.number, node.value)] = set()
 
-
-
     def build_tree(self):
         self.root = self.build_helper()
 
@@ -99,6 +96,11 @@ class ST(AST):
             node.right_child = right_child
             node.right_child.left_child = child
         return node
+    
+    def get_last_pos(self):
+        for key in self.follow_pos:
+            if key[1] == '#':
+                return key[0]
 
 
 

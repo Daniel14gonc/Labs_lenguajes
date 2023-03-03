@@ -36,6 +36,7 @@ class Regex(object):
         for element in self.expression:
             if element not in self.operators and element not in '()':
                 self.alphabet.append(element)
+        self.alphabet = list(set(self.alphabet))
 
     def add_concatenation_symbol(self):
         new_expression = ""

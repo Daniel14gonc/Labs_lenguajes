@@ -9,10 +9,37 @@ class DFA(FA):
             self.build_direct()
 
     def build_direct(self):
+        count = 1
         tree = ST(self.regex)
         table = tree.get_followpos_table()
-        
+        first_state = frozenset(tree.root.first_pos)
+        self.create_special_alphabet()
+        states = {first_state: count}
+        unmarked_states = [first_state]
+        self.build_matrix_entry(count)
+        count += 1
+        pos_augmented = tree.get_last_pos()
+        self.initial_states.add(states[first_state])
+        if pos_augmented in first_state:
+            self.acceptance_states.add(states[first_state])
 
+        while unmarked_states:
+            S = unmarked_states.pop()
+            for symbol in self.special_alphabet:
+                U = set()
+                for state in S:
+                    if (state, symbol) in table:
+                        U = U.union(table[(state, symbol)])
+                            
+                U = frozenset(U)
+                if U not in states:
+                    states[U] = count
+                    self.build_matrix_entry(count)
+                    unmarked_states.append(U)
+                    count += 1
+                self.create_transition(states[S], states[U], symbol)
+                if pos_augmented in U:
+                    self.acceptance_states.add(states[U])
 
     def build_from_NFA(self, NFA):
         self.regex = NFA.regex
