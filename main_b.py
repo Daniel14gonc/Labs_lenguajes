@@ -7,16 +7,21 @@ print('Disclaimer: Debe ingresar las expresiones regulares sin "." en la concate
 # expression = input("> Ingrese la expresion regular sin '.' en la concatenación: ")
 
 # regex = Regex('0 ? ( 1 ? ) ? 0 +')
-regex = Regex('(a|b)*abb')
+regex = Regex('0 ? ( 1 ? ) ? 0 *')
 '''
 nfa = NFA(regex)
 nfa.output_image('NFA')
 dfa = nfa.convert_to_DFA()
 dfa.output_image('DFA')
+nfa = NFA(regex)
+nfa.output_image('NFA')
+dfa = nfa.convert_to_DFA()
+dfa.output_image('DFA')
+
 '''
 dfa_direct = DFA(regex)
-dfa_direct.output_image('DFA_direct')
-'''
+dfa_direct.minimize()
+dfa_direct.output_image('DFA_min')
 print("Su regex es: ", regex.expression)
 print("Su regex en postfix es: ", regex.to_postfix())
 print("Puede encontrar el AFN visual de su regex en la carpeta de output.\n")
@@ -29,3 +34,4 @@ print("Puede encontrar el AFN visual de su regex en la carpeta de output.\n")
 # regex = Regex('a|x*a*|e')
 # regex = Regex(')(()++a')
 # regex = Regex('(a|b)*abb')
+'''

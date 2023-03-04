@@ -44,7 +44,7 @@ class AFVisual(object):
         current_nodes.add(state)
         if state in self.acceptance_states:
             self.visual_graph.node(str(state), shape="doublecircle")
-        elif state in self.initial_states:
+        if state in self.initial_states:
             self.visual_graph.edge("fake", str(state), style="bold")
             self.visual_graph.node(str(state), root="true")
         else:

@@ -12,6 +12,7 @@ class DFA(FA):
         count = 1
         tree = ST(self.regex)
         table = tree.get_followpos_table()
+        print('HOLL', table)
         first_state = frozenset(tree.root.first_pos)
         self.create_special_alphabet()
         states = {first_state: count}
@@ -32,14 +33,18 @@ class DFA(FA):
                         U = U.union(table[(state, symbol)])
                             
                 U = frozenset(U)
-                if U not in states:
-                    states[U] = count
-                    self.build_matrix_entry(count)
-                    unmarked_states.append(U)
-                    count += 1
-                self.create_transition(states[S], states[U], symbol)
-                if pos_augmented in U:
-                    self.acceptance_states.add(states[U])
+                if U:
+                    if U not in states:
+                        states[U] = count
+                        self.build_matrix_entry(count)
+                        unmarked_states.append(U)
+                        count += 1
+                    self.create_transition(states[S], states[U], symbol)
+                    if pos_augmented in U:
+                        self.acceptance_states.add(states[U])
+
+        self.alphabet = self.special_alphabet
+        print(self.transitions)
 
     def build_from_NFA(self, NFA):
         self.regex = NFA.regex
@@ -62,14 +67,15 @@ class DFA(FA):
             self.check_special_state(T, NFA, D_states[T])
             for symbol in self.special_alphabet:
                 U = frozenset(self.e_closure(self.move(T, symbol)))
-                if U not in D_states:
-                    D_states[U] = count_states
-                    unmarked_states.append(U)
-                    count_states += 1
-            
-                if D_states[U] not in self.transitions:
-                    self.build_matrix_entry(D_states[U])
-                self.create_transition(D_states[T], D_states[U], symbol) 
+                if U:
+                    if U not in D_states:
+                        D_states[U] = count_states
+                        unmarked_states.append(U)
+                        count_states += 1
+                
+                    if D_states[U] not in self.transitions:
+                        self.build_matrix_entry(D_states[U])
+                    self.create_transition(D_states[T], D_states[U], symbol) 
         self.alphabet = self.special_alphabet
         print(self.transitions)
 
@@ -94,3 +100,82 @@ class DFA(FA):
     def build_matrix_entry(self, state):
         entry = [set() for element in self.special_alphabet]
         self.transitions[state] = entry
+
+    def minimize(self):
+        partition = self.hopcroft()
+        self.replace_representative(partition)
+
+    def replace_representative(self, partition):
+        for sets in partition:
+            sets = set(sets)
+            representative = self.split_set(sets)
+            self.replace_transition(representative, sets)
+            self.delete_transition_entry(sets)
+
+    def delete_transition_entry(self, states):
+        for state in states:
+            self.transitions.pop(state)
+        
+    def replace_transition(self, representative, set):
+        for element in set:
+            for transition in self.transitions:
+                for state in self.transitions[transition]:
+                    if element in state:
+                        state.discard(element)
+                        state.add(representative)
+
+    def split_set(self, set):
+        if set:
+            representative = set.pop()
+            return representative
+    
+    def get_initial_partition(self):
+        states = self.get_states()
+        acceptance = frozenset({state for state in states if state in self.acceptance_states})
+        non_acceptance = frozenset(states - acceptance)
+        partition = {acceptance, non_acceptance}
+        work_list = {acceptance, non_acceptance}
+        return partition, work_list
+        
+
+    def hopcroft(self):
+        partition, work_list = self.get_initial_partition()
+        while work_list:
+            new_partition = {element for element in partition}
+            s = work_list.pop()
+            for symbol in self.alphabet:
+                image = self.get_states_with_symbol(s, symbol)
+                for Y in partition:
+                    if Y.intersection(image):
+                        intersection = frozenset(image.intersection(Y))
+                        difference = frozenset(Y - image)
+                        
+                        print('AAA', new_partition)
+                        new_partition.remove(Y)
+                        new_partition.add(intersection)
+                        new_partition.add(difference)
+
+                        if Y in work_list:
+                            work_list.remove(Y)
+                            work_list.add(intersection)
+                            work_list.add(difference)
+                        else:
+                            if len(intersection) <= len(difference):
+                                work_list.add(intersection)
+                            else:
+                                work_list.add(difference)
+            partition = new_partition
+        return partition
+    
+    def get_states_with_symbol(self, states, symbol):
+        index = self.get_symbol_index(symbol)
+        result = set()
+        for element in states:
+            for state in self.transitions:
+                if element in self.transitions[state][index]:
+                    result.add(state)
+        
+        return result
+
+    def get_states(self):
+        return {state for state in self.transitions}

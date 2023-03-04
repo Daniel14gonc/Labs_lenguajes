@@ -51,10 +51,12 @@ class ST(AST):
                     node.last_pos = childs_last_pos
                 else:
                     node.last_pos = node.right_child.last_pos
+                node.nullable = node.right_child.nullable and node.left_child.nullable
                 self.compute_follow_pos(node)
             else:
                 node.first_pos = node.left_child.first_pos.union(node.right_child.first_pos)
                 node.last_pos = node.left_child.last_pos.union(node.right_child.last_pos)
+                node.nullable = node.right_child.nullable or node.left_child.nullable
 
         if node.value == '*':
             self.assignment_helper(node.left_child)
@@ -65,7 +67,7 @@ class ST(AST):
         if node.value in self.alphabet or node.value == '#':
             node.number = self.count
             self.count += 1
-            if node == 'ε':
+            if node.value == 'ε':
                 node.nullable = True
             else:
                 node.first_pos.add(node.number)
