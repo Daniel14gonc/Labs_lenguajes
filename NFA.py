@@ -1,5 +1,6 @@
 from FA import FA
 from DFA import DFA
+from FAErrorChekcer import FAErrorChecker
 
 class NFA(FA):
 
@@ -7,6 +8,7 @@ class NFA(FA):
         super().__init__(regex)
         self.root = self.regex.get_root()
         self.build_afn()
+        self.error_checker = FAErrorChecker()
 
     
     def build_afn(self):
@@ -119,3 +121,13 @@ class NFA(FA):
     def build_matrix_entry(self, state):
         entry = [set() for element in self.alphabet]
         self.transitions[state] = entry
+
+    def simulate(self, string):
+        self.error_checker.check_alphabet_errors(string, self.alphabet)
+        s = self.e_closure(self.initial_states)
+        for element in string:
+            s = self.e_closure(self.move(s, element))
+
+        if s.intersection(self.acceptance_states):
+            return True
+        return False 

@@ -17,7 +17,6 @@ class AFVisual(object):
         first = None
         for element in self.initial_states:
             first = element
-        
         self.bfs(first)
 
         self.output_graph()
@@ -63,4 +62,4 @@ class AFVisual(object):
             i += 1       
 
     def output_graph(self):
-        self.visual_graph.render(directory='output', view=True)
+        self.visual_graph.render(directory='output', view=False)

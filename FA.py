@@ -21,37 +21,42 @@ class FA(object):
             
     def move(self, states, symbol):
         result = set()
+        transitions = self.external_transitions.copy() if self.external_transitions else self.transitions.copy()
         for state in states:
             index = self.get_symbol_index(symbol)
-            transitions = self.external_transitions[state]
-            states_reached = transitions[index]
+            transition = transitions[state]
+            states_reached = transition[index]
             for element in states_reached:
                 result.add(element)
         return result
 
 
     def e_closure(self, states):
+        transitions = self.external_transitions.copy() if self.external_transitions else self.transitions.copy()
         stack = []
         for state in states:
             stack.append(state)
         
-        result = states
+        result = states.copy()
 
         while stack:
             t = stack.pop()
-            transitions = self.external_transitions[t]
+            transition = transitions[t]
             index = self.get_symbol_index('ε')
-            states_reached = transitions[index]
+            states_reached = transition[index]
             for element in states_reached:
                 if element not in result:
                     result.add(element)
                     stack.append(element)
-
         return result
 
     def output_image(self, path=None):
         if not path:
             path = "FA"
+       
         self.create_AFvisual(path)
         self.visual_graph.set_AF(self)
         self.visual_graph.build_graph()
+
+    def set_external_transitions(self, transitions):
+        self.external_transitions = transitions

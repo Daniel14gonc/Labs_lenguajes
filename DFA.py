@@ -1,5 +1,6 @@
 from FA import FA
 from ST import ST
+from FAErrorChekcer import FAErrorChecker
 
 class DFA(FA):
 
@@ -9,6 +10,8 @@ class DFA(FA):
         self.temp_transitions = None
         if regex:
             self.build_direct()
+
+        self.error_checker = FAErrorChecker()
 
     def build_direct(self):
         count = 1
@@ -48,6 +51,7 @@ class DFA(FA):
         self.alphabet = self.special_alphabet
         self.temp_transitions = self.transitions
         self.delete_dead_state()
+        self.set_external_transitions(self.transitions)
 
     def build_from_NFA(self, NFA):
         self.regex = NFA.regex
@@ -83,6 +87,7 @@ class DFA(FA):
         self.alphabet = self.special_alphabet
         self.temp_transitions = self.transitions
         self.delete_dead_state()
+        self.set_external_transitions(self.transitions)
 
     def check_special_state(self, state, NFA, representation):
         for element in state:
@@ -198,7 +203,6 @@ class DFA(FA):
 
     def build_new_transitions(self, partition):
         representatives, table = self.representatives(partition)
-        print(partition, representatives)
         transitions = {}
         for element in representatives:
             if element not in transitions:
@@ -215,9 +219,9 @@ class DFA(FA):
     def minimize(self):
         partition = self.get_initial_partition()
         final_partition = self.hopcroft(partition)
-        print(final_partition)
         self.build_new_transitions(final_partition)
         self.delete_dead_state()
+        self.set_external_transitions(self.transitions)
 
 
     def hopcroft(self, partition):
@@ -247,3 +251,13 @@ class DFA(FA):
 
     def get_states(self, transitions):
         return {state for state in transitions}
+    
+    def simulate(self, string):
+        self.error_checker.check_alphabet_errors(string, self.alphabet)
+        s = self.initial_states
+        for element in string:
+            s = self.move(s, element)
+            
+        if s.intersection(self.acceptance_states):
+            return True
+        return False 
