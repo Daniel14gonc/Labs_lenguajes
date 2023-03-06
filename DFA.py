@@ -5,6 +5,8 @@ class DFA(FA):
 
     def __init__(self, regex=None) -> None:
         super().__init__(regex)
+        self.dead_state = None
+        self.temp_transitions = None
         if regex:
             self.build_direct()
 
@@ -12,7 +14,6 @@ class DFA(FA):
         count = 1
         tree = ST(self.regex)
         table = tree.get_followpos_table()
-        print('HOLL', table)
         first_state = frozenset(tree.root.first_pos)
         self.create_special_alphabet()
         states = {first_state: count}
@@ -33,18 +34,20 @@ class DFA(FA):
                         U = U.union(table[(state, symbol)])
                             
                 U = frozenset(U)
-                if U:
-                    if U not in states:
-                        states[U] = count
-                        self.build_matrix_entry(count)
-                        unmarked_states.append(U)
-                        count += 1
-                    self.create_transition(states[S], states[U], symbol)
-                    if pos_augmented in U:
-                        self.acceptance_states.add(states[U])
+                if U not in states:
+                    states[U] = count
+                    if not U:
+                        self.dead_state = count
+                    self.build_matrix_entry(count)
+                    unmarked_states.append(U)
+                    count += 1
+                self.create_transition(states[S], states[U], symbol)
+                if pos_augmented in U:
+                    self.acceptance_states.add(states[U])
 
         self.alphabet = self.special_alphabet
-        print(self.transitions)
+        self.temp_transitions = self.transitions
+        self.delete_dead_state()
 
     def build_from_NFA(self, NFA):
         self.regex = NFA.regex
@@ -67,17 +70,19 @@ class DFA(FA):
             self.check_special_state(T, NFA, D_states[T])
             for symbol in self.special_alphabet:
                 U = frozenset(self.e_closure(self.move(T, symbol)))
-                if U:
-                    if U not in D_states:
-                        D_states[U] = count_states
-                        unmarked_states.append(U)
-                        count_states += 1
-                
-                    if D_states[U] not in self.transitions:
-                        self.build_matrix_entry(D_states[U])
-                    self.create_transition(D_states[T], D_states[U], symbol) 
+                if U not in D_states:
+                    D_states[U] = count_states
+                    if not U:
+                        self.dead_state = count_states
+                    unmarked_states.append(U)
+                    count_states += 1
+            
+                if D_states[U] not in self.transitions:
+                    self.build_matrix_entry(D_states[U])
+                self.create_transition(D_states[T], D_states[U], symbol) 
         self.alphabet = self.special_alphabet
-        print(self.transitions)
+        self.temp_transitions = self.transitions
+        self.delete_dead_state()
 
     def check_special_state(self, state, NFA, representation):
         for element in state:
@@ -101,71 +106,134 @@ class DFA(FA):
         entry = [set() for element in self.special_alphabet]
         self.transitions[state] = entry
 
-    def minimize(self):
-        partition = self.hopcroft()
-        self.replace_representative(partition)
-
-    def replace_representative(self, partition):
-        for sets in partition:
-            sets = set(sets)
-            representative = self.split_set(sets)
-            self.replace_transition(representative, sets)
-            self.delete_transition_entry(sets)
-
-    def delete_transition_entry(self, states):
-        for state in states:
-            self.transitions.pop(state)
+    def delete_dead_state(self):
+        transitions = self.transitions.copy()
+        for transition in self.transitions:
+            if transition == self.dead_state:
+                transitions.pop(transition)
+            else:
+                new_element = []
+                for element in self.transitions[transition]:
+                    if self.dead_state in element:
+                        new_element.append(set())
+                    else:
+                        new_element.append(element)
+                transitions[transition] = new_element
         
-    def replace_transition(self, representative, set):
-        for element in set:
-            for transition in self.transitions:
-                for state in self.transitions[transition]:
-                    if element in state:
-                        state.discard(element)
-                        state.add(representative)
-
-    def split_set(self, set):
-        if set:
-            representative = set.pop()
-            return representative
+        self.transitions = transitions
     
     def get_initial_partition(self):
-        states = self.get_states()
+        states = self.get_states(self.temp_transitions)
         acceptance = frozenset({state for state in states if state in self.acceptance_states})
         non_acceptance = frozenset(states - acceptance)
         partition = {acceptance, non_acceptance}
-        work_list = {acceptance, non_acceptance}
-        return partition, work_list
-        
-
-    def hopcroft(self):
-        partition, work_list = self.get_initial_partition()
-        while work_list:
-            new_partition = {element for element in partition}
-            s = work_list.pop()
-            for symbol in self.alphabet:
-                image = self.get_states_with_symbol(s, symbol)
-                for Y in partition:
-                    if Y.intersection(image):
-                        intersection = frozenset(image.intersection(Y))
-                        difference = frozenset(Y - image)
-                        
-                        print('AAA', new_partition)
-                        new_partition.remove(Y)
-                        new_partition.add(intersection)
-                        new_partition.add(difference)
-
-                        if Y in work_list:
-                            work_list.remove(Y)
-                            work_list.add(intersection)
-                            work_list.add(difference)
-                        else:
-                            if len(intersection) <= len(difference):
-                                work_list.add(intersection)
-                            else:
-                                work_list.add(difference)
-            partition = new_partition
         return partition
+
+    def get_group(self, element, groups, symbol):
+        index = self.get_symbol_index(symbol)
+        transition = list(self.temp_transitions[element][index])[0]
+        for group in groups:
+            if transition in group:
+                return list(group)
+            
+    def check_equal(self, tag):
+        last = tag[0]
+        for element in tag:
+            if element != last:
+                return False
+            last = element
+        
+        return True
+
+    def create_partition(self, group, group_tag):
+        group_dict_helper = {}
+        for i in range(len(group_tag)):
+            tag = tuple(group_tag[i])
+            element = group[i]
+            if tag in group_dict_helper:
+                group_dict_helper[tag].add(element)
+            else:
+                group_dict_helper[tag] = {element}
+
+        new_partition = set()
+        for key in group_dict_helper:
+            new_partition.add(frozenset(group_dict_helper[key]))
+
+        return new_partition
+
+    def create_new_partition(self, group, partition):
+        groups = list(partition)
+        group_list = list(group)
+        for symbol in self.alphabet:
+            group_tag = []
+            for element in group_list:
+                group_tag.append(self.get_group(element, groups, symbol))
+            if not self.check_equal(group_tag):
+                return self.create_partition(group_list, group_tag)
+           
+        return {group}
+                
+    def representatives(self, partition):
+        table = {}
+        representatives = []
+        initial = list(self.initial_states)[0]
+        for element in partition:
+            representative = None
+            if self.dead_state in element:
+                representative = self.dead_state
+            if initial in element:
+                representative = initial
+            else:
+                representative = list(element)[0]
+            table[element] = representative
+            representatives.append(representative)
+
+        return representatives, table
+
+    def get_transition_representative(self, element, table):
+        element = list(element)[0]
+        for key in table:
+            if element in key:
+                return table[key]
+
+    def build_new_transitions(self, partition):
+        representatives, table = self.representatives(partition)
+        print(partition, representatives)
+        transitions = {}
+        for element in representatives:
+            if element not in transitions:
+                transitions[element] = [set() for element in self.alphabet]
+            for symbol in self.alphabet:
+                index = self.get_symbol_index(symbol)
+                state = self.temp_transitions[element][index]
+                transition_representative = self.get_transition_representative(state, table)
+                transitions[element][index].add(transition_representative)
+
+        self.transitions = transitions
+
+
+    def minimize(self):
+        partition = self.get_initial_partition()
+        final_partition = self.hopcroft(partition)
+        print(final_partition)
+        self.build_new_transitions(final_partition)
+        self.delete_dead_state()
+
+
+    def hopcroft(self, partition):
+        partition_new = list(partition.copy())
+        for group in partition:
+            new_group = self.create_new_partition(group, partition)
+            partition_new.remove(group)
+            for element in new_group:
+                partition_new.append(element)
+        
+        partition_new = set(partition_new)
+        
+        if partition_new == partition:
+            return partition
+        else:
+            return self.hopcroft(partition_new)
     
     def get_states_with_symbol(self, states, symbol):
         index = self.get_symbol_index(symbol)
@@ -177,5 +245,5 @@ class DFA(FA):
         
         return result
 
-    def get_states(self):
-        return {state for state in self.transitions}
+    def get_states(self, transitions):
+        return {state for state in transitions}
