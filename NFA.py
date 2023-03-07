@@ -123,10 +123,12 @@ class NFA(FA):
         self.transitions[state] = entry
 
     def simulate(self, string):
-        self.error_checker.check_alphabet_errors(string, self.alphabet)
+        # self.error_checker.check_alphabet_errors(string, self.alphabet)
         s = self.e_closure(self.initial_states)
         string = 'ε' if not string else string
         for element in string:
+            if element not in self.alphabet:
+                return False
             if element != 'ε':
                 s = self.e_closure(self.move(s, element))
 
