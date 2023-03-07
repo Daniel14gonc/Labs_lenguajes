@@ -125,8 +125,10 @@ class NFA(FA):
     def simulate(self, string):
         self.error_checker.check_alphabet_errors(string, self.alphabet)
         s = self.e_closure(self.initial_states)
+        string = 'ε' if not string else string
         for element in string:
-            s = self.e_closure(self.move(s, element))
+            if element != 'ε':
+                s = self.e_closure(self.move(s, element))
 
         if s.intersection(self.acceptance_states):
             return True

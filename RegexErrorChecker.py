@@ -30,7 +30,7 @@ class RegexErrorChecker(object):
                     if not last_string:
                         error = f"Parenthesis do not have anything between them."
                         self.error_logs.append(error)
-            elif element in self.alphabet:
+            else:
                 string_between_parenthesis[-1] += element
             
             i += 1

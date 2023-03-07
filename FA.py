@@ -1,4 +1,6 @@
 from AFVisual import AFVisual
+import pandas as pd
+import dataframe_image as dfi
 
 class FA(object):
     def __init__(self, regex = None) -> None:
@@ -60,3 +62,7 @@ class FA(object):
 
     def set_external_transitions(self, transitions):
         self.external_transitions = transitions
+
+    def create_table(self, path):
+        df = pd.DataFrame.from_dict(self.transitions, orient = 'index', columns=self.alphabet)
+        dfi.export(df, 'tables/' + path + '.png')

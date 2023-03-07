@@ -135,7 +135,7 @@ class DFA(FA):
         return partition
 
     def get_group(self, element, groups, symbol):
-        index = self.get_symbol_index(symbol)
+        index = self.get_symbol_index_special(symbol)
         transition = list(self.temp_transitions[element][index])[0]
         for group in groups:
             if transition in group:
@@ -183,15 +183,16 @@ class DFA(FA):
         representatives = []
         initial = list(self.initial_states)[0]
         for element in partition:
-            representative = None
-            if self.dead_state in element:
-                representative = self.dead_state
-            if initial in element:
-                representative = initial
-            else:
-                representative = list(element)[0]
-            table[element] = representative
-            representatives.append(representative)
+            if element:
+                representative = None
+                if self.dead_state in element:
+                    representative = self.dead_state
+                if initial in element:
+                    representative = initial
+                else:
+                    representative = list(element)[0]
+                table[element] = representative
+                representatives.append(representative)
 
         return representatives, table
 
@@ -227,10 +228,11 @@ class DFA(FA):
     def hopcroft(self, partition):
         partition_new = list(partition.copy())
         for group in partition:
-            new_group = self.create_new_partition(group, partition)
-            partition_new.remove(group)
-            for element in new_group:
-                partition_new.append(element)
+            if group:
+                new_group = self.create_new_partition(group, partition)
+                partition_new.remove(group)
+                for element in new_group:
+                    partition_new.append(element)
         
         partition_new = set(partition_new)
         
@@ -255,8 +257,10 @@ class DFA(FA):
     def simulate(self, string):
         self.error_checker.check_alphabet_errors(string, self.alphabet)
         s = self.initial_states
+        string = 'ε' if not string else string
         for element in string:
-            s = self.move(s, element)
+            if element != 'ε':
+                s = self.move(s, element)
             
         if s.intersection(self.acceptance_states):
             return True
