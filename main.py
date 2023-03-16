@@ -5,8 +5,8 @@ from DFA import DFA
 
 def input_handler():
     expression = input('Ingrese expresión regular que desea evaluar> ')
-    string = input('Ingrese la cadena que desea evaluar> ')
     regex = Regex(expression)
+    string = input('Ingrese la cadena que desea evaluar> ')
     nfa = NFA(regex)
     result = "aceptada" if nfa.simulate(string) else "rechazada"
     print("La expresión", string, "ha sido", result, "por el AFN.")
