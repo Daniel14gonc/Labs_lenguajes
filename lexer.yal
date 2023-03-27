@@ -1,0 +1,13 @@
+{
+    import python
+    import algo
+}
+
+let digit = '['0'-'9']'
+let letters = ['a'-'z']*
+let integer = digit+
+(*let float = integer "." integer*)
+(*let blank = " "*)
+
+rule gettoken =
+[' ' '\t'] { return lexbuf } (* skip blanks *)

@@ -4,8 +4,9 @@ from FAErrorChekcer import FAErrorChecker
 
 class NFA(FA):
 
-    def __init__(self, regex=None) -> None:
+    def __init__(self, regex = None, count = 1) -> None:
         super().__init__(regex)
+        self.count = count
         self.root = self.regex.get_root()
         self.build_afn()
         self.error_checker = FAErrorChecker()
