@@ -4,9 +4,10 @@
 }
 
 let digit = '['0'-'9']'
-let letters = ['a'-'z']*
+let letters = ['b'-'z']*
+let as = ['b'-'z' 'B'-'Z']
 let integer = digit+
-(*let float = integer "." integer*)
+let float = integer "." integer
 (*let blank = " "*)
 
 rule gettoken =

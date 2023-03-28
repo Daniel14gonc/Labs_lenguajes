@@ -6,15 +6,12 @@ from RegexErrorChecker import RegexErrorChecker
 class Regex(object):
     def __init__(self, expression) -> None:
         self.alphabet = ['ε']
-        self.operators = {'.', '|', '*', '+', '?'}
+        self.operators = {' ', '|', '*', '+', '?'}
         self.binarios = {'|'}
         self.error_checker = RegexErrorChecker(expression)
         self.expression = expression
 
-        if '.' in expression:
-            error = "Error in expression. Cannot enter '.' as concatenation operator."
-            self.error_checker.add_error(error)
-            raise Exception(self.error_checker.get_error_result())
+        
         if not expression:
             error = "Expression empty"
             self.error_checker.add_error(error)
@@ -47,7 +44,7 @@ class Regex(object):
                 current = self.expression[i]
                 new_expression += current
                 if (current != "(" and next != ")") and next not in self.operators and current not in self.binarios:
-                    new_expression += '.'
+                    new_expression += ' '
             else:
                 new_expression += self.expression[i]
         self.expression = new_expression
@@ -92,7 +89,7 @@ class Regex(object):
                     new_node.set_right_child(epsilon_node)
                 else:
                     new_node.set_left_child(o1)
-        elif operator in '|.':
+        elif operator in '| ':
             if not stack or len(stack) == 1:
                 error = f"Binary operator {operator} does not have the operators required."
                 self.error_checker.add_error(error)
@@ -116,7 +113,7 @@ class Regex(object):
         output_stack = []
         output = ""
         operator_stack = []
-        operators = ".*+|?"
+        operators = " *+|?"
         for element in self.expression:
             if element in self.alphabet:
                 output_stack.append(Node(element))
@@ -159,7 +156,7 @@ class Regex(object):
             return 4
         if element in '*+?':
             return 3
-        if element == '.':
+        if element == ' ':
             return 2
         if element in '|':
             return 1

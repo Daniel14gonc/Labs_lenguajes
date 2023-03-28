@@ -14,7 +14,6 @@ class YalexReader(object):
         self.build_header()
         self.clean_comments()
         self.build_regex()
-        self.replace_common_patterns()
         
 
     def clean_comments(self):
@@ -30,6 +29,31 @@ class YalexReader(object):
             if line:
                 if "let" in line:
                     self.common_regex(line)
+
+    def common_regex(self, line):
+        line = self.space_operators(line)
+        line = line.replace('" "', '"space"')
+        line = line.replace("' '", "'space'")
+        line = line.split(" ")
+        body = ''
+        for i in range(3, len(line)):
+            element = line[i]
+            if "'" in element or '"' in element:
+                if 'space' == element:
+                    body += ' '
+                else:
+                    element = element.replace('"', '')
+                    element = element.replace("'", "")
+                    body += element
+            elif not self.check_operators(element) and len(element) > 1:
+                replacement = self.regex[element]
+                body += replacement 
+            else:
+                body += element
+        body = body.replace('space', ' ')
+        body = self.replace_common_patterns(body)
+        body = body.strip()
+        self.regex[line[1]] = body
     
     def check_operators(self, element):
         operators = '*+|?'
@@ -44,43 +68,72 @@ class YalexReader(object):
             line = line.replace(operator, ' ' + operator + ' ')
         return line
     
-    def replace_common_patterns(self):
-        numbers = '(0|1|2|3|4|5|6|7|8|9)'
-        letters = 'a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z'
-        letters_upper = letters.upper()
-        paren_lower_letters = '(' + letters + ')'
-        paren_upper_letters = '(' + letters_upper + ')'
-        upper_lower_letters = '(' + letters + '|' + letters_upper + ')'
+    def replace_range(self, initial, final):
+        result = str(initial) + '|'
+        if initial.lower() in self.letters:
+            for i in range(ord(initial) + 1, ord(final)):
+                between_letter = chr(i)
+                result += between_letter + '|'
+            result += final
+        elif initial in self.numbers:
+            for i in range(int(initial) + 1 , int(final)):
+                result += str(i) + '|'
+            result += str(final)
 
-        for key in self.regex:
-            regex = self.regex[key]
-            regex = regex.replace('[A-Z a-z]', upper_lower_letters)
-            regex = regex.replace('[0-9]', numbers)
-            regex = regex.replace('[a-z]', paren_lower_letters)
-            regex = regex.replace('[A-Z]', paren_upper_letters)
-            self.regex[key] = regex
+        return result
+    
+    def simple_range(self, regex):
+        splitted = regex.split('-')
+        initial = splitted[0].replace('[', '')
+        initial = initial.strip()
+        initial = initial[0]
+        final = splitted[1].replace(']', '')
+        final = final.strip()
+        final = final[0]
+        result = self.replace_range(initial, final)
+        result = '(' + result + ')'
+        regex = regex.replace('['+initial+'-'+final+']', result)
+        return regex
+    
+    def compound_range(self, regex):
+        splitted = regex.split(' ')
+        first = splitted[0].replace('[', '')
+        last = splitted[1].replace(']', '')
 
-    def common_regex(self, line):
-        line = self.space_operators(line)
-        line = line.replace('" "', '"space"')
-        line = line.replace("' '", "'space'")
-        line = line.split(" ")
-        body = ''
-        for i in range(3, len(line)):
-            element = line[i]
-            if "'" in element or '"' in element:
-                if 'space' in element:
-                    body += ' '
-                else:
-                    element = element.replace('"', '')
-                    element = element.replace("'", "")
-                    body += element
-            elif not self.check_operators(element) and len(element) > 1:
-                replacement = self.regex[element]
-                body += replacement 
-            else:
-                body += element
-        self.regex[line[1]] = body
+        splitted_first = first.split('-')
+        splitted_last = last.split('-')
+        first_range = self.replace_range(splitted_first[0][0], splitted_first[1][0])
+        second_range = self.replace_range(splitted_last[0][0], splitted_last[1][0])
+        result = '(' + first_range + '|' + second_range + ')'
+        replaced = ''
+        i = 0
+        closed = False
+        while not closed:
+            if regex[i] == ']':
+                closed = True
+            replaced += regex[i]
+            i += 1
+        regex = regex.replace(replaced, result)
+        return regex
+
+    def appeareances(self, string, symbol):
+        counter = 0
+        for element in string:
+            if element == symbol:
+                counter += 1
+
+        return counter
+    
+    def replace_common_patterns(self, regex):
+        self.letters = 'abcdefghijklmnopqrstuvwxyz'
+        self.numbers = '0123456789'
+        hyphen = '-'
+        if '[' in regex and ']' in regex and '-' in regex:
+            if self.appeareances(regex, hyphen) > 1 and self.appeareances(regex, '[') == 1:
+                regex = self.compound_range(regex)
+            elif self.appeareances(regex, '[') == 1:
+                regex = self.simple_range(regex)
+        return regex
         
 
     def build_header(self):

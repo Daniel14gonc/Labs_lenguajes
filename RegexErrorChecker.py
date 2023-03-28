@@ -11,6 +11,7 @@ class RegexErrorChecker(object):
         self.check_parenthesis()
         self.check_sequence_operators()
         self.check_ends_expression()
+        self.check_alpha_numeric()
 
     def check_parenthesis(self):
         stack = []
@@ -70,3 +71,10 @@ class RegexErrorChecker(object):
         exception += ''.join(f'{error}\n' for error in self.error_logs)
         
         return exception
+    
+    def check_alpha_numeric(self):
+        alpha_numeric = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.|*+(), "
+        for element in self.expression:
+            if element not in alpha_numeric:
+                error = f"Value {element} is not alphanumeric."
+                self.error_logs.append(error)

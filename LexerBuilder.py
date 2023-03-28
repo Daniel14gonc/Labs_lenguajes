@@ -17,7 +17,6 @@ class LexerBuilder(object):
         self.count = 1
         for key in self.regex:
             regex = Regex(self.regex[key])
-            print(regex.to_postfix())
             nfa = NFA(regex, self.count)
             self.count = nfa.count
             self.NFAs.append(nfa)

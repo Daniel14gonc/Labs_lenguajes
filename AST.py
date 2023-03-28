@@ -11,7 +11,7 @@ class AST(object):
         if node:
             if node.value in '?*+':
                 res += self.postorder_helper(node.left_child)
-            elif node.value in '|.':
+            elif node.value in '| ':
                 res += self.postorder_helper(node.left_child)
                 res += self.postorder_helper(node.right_child)
             return res + node.value

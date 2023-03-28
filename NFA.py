@@ -25,7 +25,7 @@ class NFA(FA):
             elif node.value == '+':
                 child = self.build_helper(node.left_child)
                 return self.create_positive_closure(child)
-            elif node.value in '|.':
+            elif node.value in '| ':
                 left = self.build_helper(node.left_child)
                 right = self.build_helper(node.right_child)
                 if node.value == '|':
