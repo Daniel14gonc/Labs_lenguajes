@@ -1,14 +1,16 @@
-{
-    import python
-    import algo
-}
+(* Ejemplo básico *)
 
-let digit = '['0'-'4']'
-(*let letters = ['b'-'z']* *)
-(*let as = ['b'-'z' 'B'-'Z']*)
-let integer = digit+
-let float = integer "." integer
-let blank = " "
+(*let delimitador = [' ''\t''\n']*)
+let hex = ['0'-'H']
+(*let espacioEnBlanco = delimitador+*)
+let digito = ['0'-'9']
+let numero = '-'?digito+
+let letra = ['a'-'z' 'A'-'Z']
+let identificador = letra(letra|digito)*
 
-rule gettoken =
-[' ' '\t'] { return lexbuf } (* skip blanks *)
+rule tokens =
+    identificador	{ print("Identificador\n") }
+  | numero			{ print("Número\n") }
+  | '+'				{ print("Operador de suma\n") }
+  | '*'				{ print("Operador de multiplicación\n") }
+  | '='				{ print("Operador de asignación\n") }

@@ -1,4 +1,5 @@
 from Reader import YalexReader
+from Formatter import YalexFormatter
 from regex import Regex
 from NFA import NFA
 from Tokenizer import Tokenizer
@@ -9,14 +10,21 @@ class LexerBuilder(object):
     
     def read_lexer_file(self):
         self.reader = YalexReader(self.path)
-        self.reader.read()
-        self.regex = self.reader.regex
+        self.yalex_content = self.reader.read()
+    
+    def get_tokens_from_yalex(self):
+        formatter = YalexFormatter()
+        formatter.format_yalex_content(self.yalex_content)
+        self.tokens = formatter.tokens
 
     def create_NFAS(self):
         self.NFAs = []
         self.count = 1
-        for key in self.regex:
-            regex = Regex(self.regex[key])
+        for element in self.tokens:
+            regex = element[0]
+            action = element[1]
+            print(regex)
+            regex = Regex(regex)
             nfa = NFA(regex, self.count)
             
             self.count = nfa.count
@@ -29,3 +37,7 @@ class LexerBuilder(object):
         tokenizer = Tokenizer()
         for nfa in self.NFAs:
             tokenizer.concatenate_FA(nfa)
+        # other = tokenizer.convert_to_DFA()
+        # other.minimize()
+        # other.output_image()
+        tokenizer.output_image()

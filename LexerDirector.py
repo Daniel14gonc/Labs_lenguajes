@@ -7,5 +7,6 @@ class LexerDirector(object):
 
     def construct_lexer(self):
         self.builder.read_lexer_file()
+        self.builder.get_tokens_from_yalex()
         self.builder.create_NFAS()
         self.builder.create_tokenizer()
