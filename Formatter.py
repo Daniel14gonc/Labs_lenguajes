@@ -11,12 +11,14 @@ class YalexFormatter(object):
         self.clean_comments()
         self.build_regex()
         self.build_tokens()
+        print(self.regex)
         
 
     def clean_comments(self):
         patron = re.compile(r'\(\*.*?\*\)', re.DOTALL)
         self.file_content = re.sub(patron, '', self.file_content)
 
+    # TODO: Hacer que los metacaracteres entre definiciones regulares funciones. por ejemplo letra','(letra|digito)*
     def build_regex(self):
         patron = re.compile(r'\{.*?\}', re.DOTALL)
         content =  re.sub(patron, '', self.file_content)
@@ -72,7 +74,7 @@ class YalexFormatter(object):
             new_list.append(element)
         return new_list
 
-
+    # TODO: Hacer que los metacaracteres funcionen con operadores despues. Por ejemplo '+'+. Actualmente toma \+\+
     def build_tokens(self):
         content = self.file_content.split('rule tokens =')
         content = content[1].strip().split('|')
@@ -122,6 +124,7 @@ class YalexFormatter(object):
         operators = '*+|?()'
         for operator in operators:
             line = line.replace(operator, ' ' + operator + ' ')
+        print(line)
         return line
     
     def replace_range(self, initial, final):

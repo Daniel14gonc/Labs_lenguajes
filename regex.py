@@ -75,9 +75,23 @@ class Regex(object):
         self.idempotency_helper('*')
         self.idempotency_helper('+')
 
+    def check_meta_characters(self):
+        new_list = []
+        i = 0
+        while i < len(self.expression):
+            element = self.expression[i]
+            if element == '\\' and i + 1 < len(self.expression) and self.expression[i + 1] != '\\':
+                new_list.append(element + self.expression[i + 1])
+                i += 1
+            else:
+                new_list.append(element)
+            i += 1
+        return new_list
+
     def idempotency_helper(self, symbol):
         last = ''
-        expression_list = list(self.expression)
+        expression_list = self.check_meta_characters()
+        i = 0
         for i in range(len(expression_list)):
             if expression_list[i] == symbol and last == symbol:
                 last = symbol

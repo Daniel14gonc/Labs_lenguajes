@@ -40,4 +40,4 @@ class LexerBuilder(object):
         # other = tokenizer.convert_to_DFA()
         # other.minimize()
         # other.output_image()
-        tokenizer.output_image()
+        # tokenizer.output_image()
