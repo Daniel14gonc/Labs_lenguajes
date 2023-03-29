@@ -3,12 +3,12 @@
     import algo
 }
 
-let digit = '['0'-'9']'
-let letters = ['b'-'z']*
-let as = ['b'-'z' 'B'-'Z']
+let digit = '['0'-'4']'
+(*let letters = ['b'-'z']* *)
+(*let as = ['b'-'z' 'B'-'Z']*)
 let integer = digit+
 let float = integer "." integer
-(*let blank = " "*)
+let blank = " "
 
 rule gettoken =
 [' ' '\t'] { return lexbuf } (* skip blanks *)

@@ -6,7 +6,8 @@ class ST(AST):
         super().__init__()
         self.regex = regex
         self.alphabet = regex.alphabet
-        self.stack = list(self.regex.to_postfix() + '# ')
+        self.stack = list(self.regex.to_postfix() + '#.')
+        print(self.stack, 'stack')
         self.follow_pos = {}
         self.build_tree()
         self.count = 1
@@ -36,10 +37,10 @@ class ST(AST):
         return self.follow_pos
     
     def assignment_helper(self, node):
-        if node.value in '| ':
+        if node.value in '|.':
             self.assignment_helper(node.left_child)
             self.assignment_helper(node.right_child)
-            if node.value == ' ':
+            if node.value == '.':
                 if node.left_child.nullable:
                     childs_first_pos = node.left_child.first_pos.union(node.right_child.first_pos)
                     node.first_pos = childs_first_pos
@@ -79,10 +80,13 @@ class ST(AST):
 
     def build_helper(self):
         current = self.stack.pop()
+        if len(self.stack) > 1 and current in '+*.' and self.stack[-1] == '\\':
+            current = self.stack.pop() + current
+        
         node = STNode(current)
         if current == '#' or current in self.alphabet:
             return node
-        elif current in '| ':
+        elif current in '|.':
             right_child = self.build_helper()
             left_child = self.build_helper()
             node.right_child = right_child
@@ -92,7 +96,7 @@ class ST(AST):
             node.left_child = child
         elif current == '+':
             child = self.build_helper()
-            node.value = ' '
+            node.value = '.'
             node.left_child = child
             right_child = STNode('*')
             node.right_child = right_child

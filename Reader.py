@@ -14,6 +14,7 @@ class YalexReader(object):
         self.build_header()
         self.clean_comments()
         self.build_regex()
+        # print(self.regex)
         
 
     def clean_comments(self):
@@ -32,8 +33,8 @@ class YalexReader(object):
 
     def common_regex(self, line):
         line = self.space_operators(line)
-        line = line.replace('" "', '"space"')
-        line = line.replace("' '", "'space'")
+        line = line.replace('" "', '"ε"')
+        line = line.replace("' '", "'ε'")
         line = line.split(" ")
         body = ''
         for i in range(3, len(line)):
@@ -44,14 +45,18 @@ class YalexReader(object):
                 else:
                     element = element.replace('"', '')
                     element = element.replace("'", "")
+                    element = element.replace('+', '\+')
+                    element = element.replace('.', '\.')
+                    element = element.replace('*', '\*')
                     body += element
             elif not self.check_operators(element) and len(element) > 1:
                 replacement = self.regex[element]
                 body += replacement 
             else:
                 body += element
-        body = body.replace('space', ' ')
+        # body = body.replace('ε', 'ε')
         body = self.replace_common_patterns(body)
+        # if body != " ":
         body = body.strip()
         self.regex[line[1]] = body
     

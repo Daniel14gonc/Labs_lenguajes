@@ -18,6 +18,7 @@ class LexerBuilder(object):
         for key in self.regex:
             regex = Regex(self.regex[key])
             nfa = NFA(regex, self.count)
+            
             self.count = nfa.count
             self.NFAs.append(nfa)
 
@@ -28,6 +29,3 @@ class LexerBuilder(object):
         tokenizer = Tokenizer()
         for nfa in self.NFAs:
             tokenizer.concatenate_FA(nfa)
-        res = tokenizer.convert_to_DFA()
-        res.minimize()
-        res.output_image()

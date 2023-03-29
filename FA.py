@@ -40,7 +40,6 @@ class FA(object):
             stack.append(state)
         
         result = states.copy()
-
         while stack:
             t = stack.pop()
             transition = transitions[t]

@@ -67,5 +67,5 @@ class Tokenizer(NFA):
 
         merged = pd.concat([table, other_table])
         merged = merged.applymap(tuple_to_set)
-        self.alphabet = merged.columns
+        self.alphabet = list(merged.columns)
         self.transitions = merged.apply(lambda row: row.tolist(), axis=1).to_dict()

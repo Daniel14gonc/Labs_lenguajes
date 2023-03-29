@@ -25,7 +25,7 @@ class NFA(FA):
             elif node.value == '+':
                 child = self.build_helper(node.left_child)
                 return self.create_positive_closure(child)
-            elif node.value in '| ':
+            elif node.value in '|.':
                 left = self.build_helper(node.left_child)
                 right = self.build_helper(node.right_child)
                 if node.value == '|':
@@ -124,12 +124,23 @@ class NFA(FA):
         self.transitions[state] = entry
 
     def simulate(self, string):
-        self.error_checker.check_alphabet_errors(string, self.alphabet)
+        # self.error_checker.check_alphabet_errors(string, self.alphabet)
         s = self.e_closure(self.initial_states)
         string = 'ε' if not string else string
-        for element in string:
+        i = 0
+        print(string)
+        print(self.alphabet)
+        while i < len(string):
+            element = string[i]
+            if element == '\\':
+                element += string[i + 1]
+                i += 1
+            if element not in self.alphabet:
+                return False
             if element != 'ε':
                 s = self.e_closure(self.move(s, element))
+
+            i += 1
 
         if s.intersection(self.acceptance_states):
             return True

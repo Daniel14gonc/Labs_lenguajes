@@ -12,13 +12,13 @@ class Regex(object):
         self.expression = expression
 
         
-        if not expression:
-            error = "Expression empty"
-            self.error_checker.add_error(error)
-            raise Exception(self.error_checker.get_error_result())
+        # if not expression:
+        #     error = "Expression empty"
+        #     self.error_checker.add_error(error)
+        #     raise Exception(self.error_checker.get_error_result())
         
-        whitespace = r"\s+"
-        self.expression = re.sub(whitespace, "", self.expression)
+        # whitespace = r"\s+"
+        # self.expression = re.sub(whitespace, "", self.expression)
         self.AST = AST()
         self.create_alphabet()
         self.add_concatenation_symbol()
@@ -30,23 +30,45 @@ class Regex(object):
             raise Exception(self.error_checker.get_error_result())
 
     def create_alphabet(self):
-        for element in self.expression:
-            if element not in self.operators and element not in '()':
+        i = 0
+        while i < len(self.expression):
+            element = self.expression[i]
+            if element == '\\':
+                next = self.expression[i + 1]
+                self.alphabet.append(element + next)
+                i += 1
+            elif element not in self.operators and element not in '()':
                 self.alphabet.append(element)
+            i += 1
+
         self.alphabet = list(set(self.alphabet))
+
+        # for element in self.expression:
+
+        #     if element not in self.operators and element not in '()':
+        #         self.alphabet.append(element)
+        # self.alphabet = list(set(self.alphabet))
 
     def add_concatenation_symbol(self):
         new_expression = ""
         
-        for i in range(len(self.expression)):
+        i = 0
+        while i < len(self.expression):
             if i + 1 < len(self.expression):
                 next = self.expression[i + 1]
                 current = self.expression[i]
+                if i + 2 < len(self.expression):
+                    if current == '\\':
+                        current += next
+                        next = self.expression[i + 2]
+                        i += 1
                 new_expression += current
                 if (current != "(" and next != ")") and next not in self.operators and current not in self.binarios:
-                    new_expression += ' '
+                    new_expression += '.'
             else:
                 new_expression += self.expression[i]
+            i += 1
+
         self.expression = new_expression
 
     def idempotency(self):
@@ -89,7 +111,7 @@ class Regex(object):
                     new_node.set_right_child(epsilon_node)
                 else:
                     new_node.set_left_child(o1)
-        elif operator in '| ':
+        elif operator in '|.':
             if not stack or len(stack) == 1:
                 error = f"Binary operator {operator} does not have the operators required."
                 self.error_checker.add_error(error)
@@ -113,8 +135,13 @@ class Regex(object):
         output_stack = []
         output = ""
         operator_stack = []
-        operators = " *+|?"
-        for element in self.expression:
+        operators = "*+|?."
+        i = 0
+        while i < len(self.expression):
+            element = self.expression[i]
+            if element == '\\':
+                element += self.expression[i + 1]
+                i += 1
             if element in self.alphabet:
                 output_stack.append(Node(element))
                 output += element
@@ -134,6 +161,7 @@ class Regex(object):
                     output += pop_element
                 
                 operator_stack.append(element)
+            i += 1
             
         while operator_stack:
             pop_element = operator_stack.pop()
@@ -156,7 +184,7 @@ class Regex(object):
             return 4
         if element in '*+?':
             return 3
-        if element == ' ':
+        if element == '.':
             return 2
         if element in '|':
             return 1
