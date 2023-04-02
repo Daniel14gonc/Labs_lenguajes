@@ -4,21 +4,27 @@ class YalexFormatter(object):
     def __init__(self) -> None:
         self.header_result = ''
         self.regex = {}
+        self.simple_pattern = r"\[(\w)\s*-\s*(\w)\]"
+        self.compound_pattern = r"\[(\w)\s*-\s*(\w)\s*(\w)\s*-\s*(\w)\]"
+        self.simple_regex_pattern = r"^let\s+\w+\s+=\s+(.*?)$"
 
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
         self.build_header()
         self.clean_comments()
+        self.replace_quotation_mark()
         self.build_regex()
         self.build_tokens()
-        print(self.regex)
+
+    def replace_quotation_mark(self):
+        self.file_content = self.file_content.replace('"', " ' ")
+        self.file_content = self.file_content.replace("'", " ' ")
         
 
     def clean_comments(self):
         patron = re.compile(r'\(\*.*?\*\)', re.DOTALL)
         self.file_content = re.sub(patron, '', self.file_content)
 
-    # TODO: Hacer que los metacaracteres entre definiciones regulares funciones. por ejemplo letra','(letra|digito)*
     def build_regex(self):
         patron = re.compile(r'\{.*?\}', re.DOTALL)
         content =  re.sub(patron, '', self.file_content)
@@ -26,8 +32,8 @@ class YalexFormatter(object):
         for line in content:
             line = line.strip()
             if line:
-                if "let" in line:
-                    self.common_regex(line)
+                if re.match(self.simple_regex_pattern, line):
+                    self.add_common_regex(line)
 
     def replace_delimiters(self, expression):
         new_list = []
@@ -52,6 +58,8 @@ class YalexFormatter(object):
         for element in expressions:
             splitted = element.split('\t', maxsplit=1)
             first_part = splitted[0]
+            if first_part not in self.regex:
+                first_part = self.common_regex(first_part.split(" "))
             second_part = splitted[1].replace('\t', '')
             second_part = second_part.replace('{' , '')
             second_part = second_part.replace('}', '')
@@ -60,37 +68,46 @@ class YalexFormatter(object):
             new_list.append(element)
         return new_list
     
-    def add_meta_character(self, expressions):
+    def add_meta_character_string(self, expression):
+        expression = expression.replace('.', '\.')
+        expression = expression.replace('+', '\+')
+        expression = expression.replace('*', '\*')
+        expression = expression.replace('"', '')
+        expression = expression.replace("'", "")
+
+        return expression
+
+    def add_meta_character_token(self, expressions):
         new_list = []
         for element in expressions:
             expression = element[0]
             if "'" in expression or '"' in expression:
-                expression = expression.replace('.', '\.')
-                expression = expression.replace('+', '\+')
-                expression = expression.replace('*', '\*')
-                expression = expression.replace('"', '')
-                expression = expression.replace("'", "")
-                element[0] = expression
+                element[0] = self.add_meta_character_string(expression)
             new_list.append(element)
         return new_list
 
-    # TODO: Hacer que los metacaracteres funcionen con operadores despues. Por ejemplo '+'+. Actualmente toma \+\+
     def build_tokens(self):
         content = self.file_content.split('rule tokens =')
-        content = content[1].strip().split('|')
+        content = self.trim_quotation_marks(content[1])
+        content = content.strip().split('|')
         content = self.replace_delimiters(content)
         content = self.convert_regexes_to_tuples(content)
-        content = self.add_meta_character(content)
+        content = self.add_meta_character_token(content)
         content = self.replace_existing_regex(content)
         self.tokens = content
 
-    def common_regex(self, line):
-        line = self.space_operators(line)
-        line = line.replace('" "', '"ε"')
-        line = line.replace("' '", "'ε'")
-        line = line.split(" ")
+    def trim_quotation_marks(self, line):
+        matches = re.findall(r"'([^']+)'", line)
+        for element in matches:
+            text = element
+            line = line.replace("'" + text + "'", "'" + text.strip() + "'")
+
+
+        return line
+    
+    def build_common_regex(self, line):
         body = ''
-        for i in range(3, len(line)):
+        for i in range(len(line)):
             element = line[i]
             if "'" in element or '"' in element:
                 if 'space' == element:
@@ -107,11 +124,24 @@ class YalexFormatter(object):
                 body += replacement 
             else:
                 body += element
+        return body
+    
+    def add_common_regex(self, line):
+        line = self.space_operators(line)
+        line = self.trim_quotation_marks(line)
+        line = line.replace('" "', '"ε"')
+        line = line.replace("' '", "'ε'")
+        line = line.split(" ")
+        body = self.common_regex(line[3:])
+        self.regex[line[1]] = body
+
+
+    def common_regex(self, line):
+        body = self.build_common_regex(line)
         body = body.replace('ε', ' ')
         body = self.replace_common_patterns(body)
-        # if body != " ":
         body = body.strip()
-        self.regex[line[1]] = body
+        return body
     
     def check_operators(self, element):
         operators = '*+|?'
@@ -124,54 +154,65 @@ class YalexFormatter(object):
         operators = '*+|?()'
         for operator in operators:
             line = line.replace(operator, ' ' + operator + ' ')
-        print(line)
+        
         return line
     
-    def replace_range(self, initial, final):
-        result = str(initial) + '|'
-        if initial.lower() in self.numbers and final.lower() in self.letters:
-            for i in range(int(initial) + 1, 10):
-                result += str(i) + '|'
-            initial_letter = 'A' if final in self.upper_letters else 'a'
-            for i in range(ord(initial_letter), ord(final)):
-                between_letter = chr(i)
-                result += between_letter + '|'
-            result += final
-
-        elif initial.lower() in self.letters:
+    def get_range_of_strings(self, initial, final):
+        result = ''
+        if ord(initial) > ord(final) and final.lower() in self.letters:
+            result += self.get_range_of_strings(initial, 'z') + '|'
+            result += self.get_range_of_strings(chr(ord(initial.upper()) -1), final)
+        else:
             for i in range(ord(initial) + 1, ord(final)):
                 between_letter = chr(i)
                 result += between_letter + '|'
             result += final
-        elif initial in self.numbers:
-            for i in range(int(initial) + 1 , int(final)):
-                result += str(i) + '|'
-            result += str(final)
+        return result
+    
+    def get_range_of_numbers(self, initial, final):
+        result = ''
+        for i in range(int(initial) + 1, int(final)):
+            result += str(i) + '|'
+        result += final
+        return result
 
+    
+    def replace_range(self, initial, final):
+        result = str(initial) + '|'
+        if initial.lower() in self.numbers and final.lower() in self.letters:
+            result += self.get_range_of_numbers(initial, '9') + '|'
+            initial_letter = 'A' if final in self.upper_letters else 'a'
+            result += initial_letter + '|'
+            result += self.get_range_of_strings(initial_letter, final)
+        elif initial.lower() in self.letters:
+            final_letter = 'Z' if initial in self.upper_letters else 'z'
+            if final in self.numbers:
+                result += self.get_range_of_strings(initial, final_letter) + '|'
+                result += '0' + '|' + self.get_range_of_numbers('0', final)
+            else:
+                result += self.get_range_of_strings(initial, final)
+        elif initial in self.numbers:
+                result += self.get_range_of_numbers(initial, final)
         return result
     
     def simple_range(self, regex):
-        splitted = regex.split('-')
-        initial = splitted[0].replace('[', '')
-        initial = initial.strip()
-        initial = initial[0]
-        final = splitted[1].replace(']', '')
-        final = final.strip()
-        final = final[0]
+        initial = self.search_simple_regex_result.group(1)
+        final = self.search_simple_regex_result.group(2)
         result = self.replace_range(initial, final)
         result = '(' + result + ')'
         regex = regex.replace('['+initial+'-'+final+']', result)
         return regex
     
     def compound_range(self, regex):
-        splitted = regex.split(' ')
-        first = splitted[0].replace('[', '')
-        last = splitted[1].replace(']', '')
+        first_initial = self.search_compound_regex_result.group(1)
+        first_final = self.search_compound_regex_result.group(2)
 
-        splitted_first = first.split('-')
-        splitted_last = last.split('-')
-        first_range = self.replace_range(splitted_first[0][0], splitted_first[1][0])
-        second_range = self.replace_range(splitted_last[0][0], splitted_last[1][0])
+        last_initial = self.search_compound_regex_result.group(3)
+        last_final = self.search_compound_regex_result.group(4)
+
+        first_range = self.replace_range(first_initial, first_final)
+        second_range = self.replace_range(last_initial, last_final)
+
         result = '(' + first_range + '|' + second_range + ')'
         replaced = ''
         i = 0
@@ -196,12 +237,13 @@ class YalexFormatter(object):
         self.letters = 'abcdefghijklmnopqrstuvwxyz'
         self.upper_letters = self.letters.upper()
         self.numbers = '0123456789'
-        hyphen = '-'
-        if '[' in regex and ']' in regex and '-' in regex:
-            if self.appeareances(regex, hyphen) > 1 and self.appeareances(regex, '[') == 1:
-                regex = self.compound_range(regex)
-            elif self.appeareances(regex, '[') == 1:
-                regex = self.simple_range(regex)
+        self.search_simple_regex_result = re.search(self.simple_pattern, regex)
+        self.search_compound_regex_result = re.search(self.compound_pattern, regex)
+        if self.search_simple_regex_result and not self.search_compound_regex_result:
+            regex = self.simple_range(regex)
+        elif self.search_compound_regex_result:
+            regex = self.compound_range(regex)
+
         return regex
         
 

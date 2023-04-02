@@ -10,3 +10,6 @@ class LexerDirector(object):
         self.builder.get_tokens_from_yalex()
         self.builder.create_NFAS()
         self.builder.create_tokenizer()
+        self.builder.concat_files_needed()
+        self.builder.concat_functionality()
+        self.builder.write_to_file()

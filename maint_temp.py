@@ -1,14 +1,10 @@
-from regex import Regex
-from NFA import NFA
-from DFA import DFA
+import re
 
-reg = Regex('ab')
+simple_pattern = r"\[\'(\w)\'\s*-\s*\'(\w)\'\]"
+compound_pattern = r"\[\'(\w)\'\s*-\s*\'(\w)\'\s*\'(\w)\'\s*-\s*\'(\w)\'\]"
+pattern = patron = r"^let\s+\w+\s+=\s+(.*?)$"
+otro = r"\'[^']*'"
 
-print(reg.alphabet)
-res = reg.to_postfix()
-nfa = NFA(reg)
-nfa.output_image('prueba')
-reg = Regex('ab\+')
-print(reg.to_postfix())
-dfa = DFA(reg)
-dfa.output_image('prueba2')
+text = "'aaaaaaa"
+
+m = re.search(otro, text)

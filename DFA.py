@@ -1,6 +1,6 @@
 from FA import FA
 from ST import ST
-from FAErrorChekcer import FAErrorChecker
+from FAErrorChecker import FAErrorChecker
 
 class DFA(FA):
 
