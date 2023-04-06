@@ -112,3 +112,5 @@ class YalexErrorChecker(object):
     # TODO: Chequear error en declaracion de rule. Es decir que diga rule =, en lugar de rule token =.
     #       Tambien que nunca se ponga rule y se declaren tokens.
     #       Tambien que no haya | entre declaracion de tokens.
+
+    # TODO para formateado: ver reglas de yalex para escape, EOF, espacios en blanco, etc.
