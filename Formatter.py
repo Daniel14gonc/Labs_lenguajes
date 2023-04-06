@@ -1,4 +1,5 @@
 import re
+from YalexErrorChecker import YalexErrorChecker
 
 class YalexFormatter(object):
     def __init__(self) -> None:
@@ -7,9 +8,12 @@ class YalexFormatter(object):
         self.simple_pattern = r"\[(\w)\s*-\s*(\w)\]"
         self.compound_pattern = r"\[(\w)\s*-\s*(\w)\s*(\w)\s*-\s*(\w)\]"
         self.simple_regex_pattern = r"^let\s+\w+\s+=\s+(.*?)$"
+        self.error_checker = YalexErrorChecker()
 
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
+        self.errors = self.error_checker.check_errors(self.file_content)
+        print(self.errors)
         self.build_header()
         self.clean_comments()
         self.replace_quotation_mark()

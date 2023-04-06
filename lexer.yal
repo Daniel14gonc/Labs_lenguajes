@@ -1,10 +1,14 @@
 (* Ejemplo básico *)
 
+{
+  import numpy as np
+}
+
 (*let delimitador = [' ''\t''\n']*)
 let hex = ['A'-'2']
 (*let espacioEnBlanco = delimitador+*)
 let digito = ['0'-'9']
-let numero = '-'?digito++++
+let numero adios hola = '-'?digito++++
 let letra = ['a'-'z' 'A'-'Z']
 let identificador = letra','(letra|digito)*
 

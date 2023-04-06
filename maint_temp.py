@@ -1,10 +1,10 @@
-import re
+from Formatter import YalexFormatter
+from Reader import YalexReader
 
-simple_pattern = r"\[\'(\w)\'\s*-\s*\'(\w)\'\]"
-compound_pattern = r"\[\'(\w)\'\s*-\s*\'(\w)\'\s*\'(\w)\'\s*-\s*\'(\w)\'\]"
-pattern = patron = r"^let\s+\w+\s+=\s+(.*?)$"
-otro = r"\'[^']*'"
+reader = YalexReader("lexer.yal")
 
-text = "'aaaaaaa"
+content = reader.read()
 
-m = re.search(otro, text)
+
+form = YalexFormatter()
+form.format_yalex_content(content)
