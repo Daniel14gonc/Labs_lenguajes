@@ -17,21 +17,37 @@ class LexerBuilder(object):
     
     def get_tokens_from_yalex(self):
         formatter = YalexFormatter()
-        formatter.format_yalex_content(self.yalex_content)
+        self.yalex_errors = formatter.format_yalex_content(self.yalex_content)
         self.tokens = formatter.tokens
+
+    def errors_exception(self):
+        errors = ""
+        if self.regex_errors:
+            for error in self.regex_errors:
+                errors += str(error)
+        if self.yalex_errors:
+            for error in self.yalex_errors:
+                errors += error
+        if errors:
+            raise Exception(errors)
 
     def create_NFAS(self):
         self.NFAs = []
         self.count = 1
+        self.regex_errors = set()
         for element in self.tokens:
             regex = element[0]
             action = element[1]
             self.regexes.append(regex)
-            regex = Regex(regex)
-            nfa = NFA(regex, self.count)
-            
-            self.count = nfa.count
-            self.NFAs.append(nfa)
+            try:
+                regex = Regex(regex)
+                nfa = NFA(regex, self.count)
+                
+                self.count = nfa.count
+                self.NFAs.append(nfa)
+            except Exception as e:
+                self.regex_errors.add(e)
+
 
     def concat_files_needed(self):
         files = ["AST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "NFA", "Tokenizer"]
@@ -61,7 +77,7 @@ class LexerBuilder(object):
         tokenizer = Tokenizer()
         for nfa in NFAs:
             tokenizer.concatenate_FA(nfa)
-        # tokenizer.output_image()
+        tokenizer.output_image()
         """)
         self.functionality.append(nfa_creator)
         self.functionality.append(tokenizer_concat)

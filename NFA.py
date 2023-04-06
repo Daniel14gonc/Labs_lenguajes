@@ -7,6 +7,7 @@ class NFA(FA):
     def __init__(self, regex = None, count = 1) -> None:
         super().__init__(regex)
         self.count = count
+        self.metas = ['\+', '\.', '\?', '\*', '\(', '\)']
         self.root = self.regex.get_root()
         self.build_afn()
         self.error_checker = FAErrorChecker()
@@ -98,6 +99,7 @@ class NFA(FA):
 
     def create_unit(self, node):
         symbol = node.value
+        symbol = symbol.replace("\\", "") if symbol in self.metas else symbol
         first = self.count
         self.count += 1
         last = self.count
@@ -116,6 +118,7 @@ class NFA(FA):
         return dfa
     
     def create_transition(self, initial_states, acceptance_states, symbol):
+        symbol = symbol.replace("\\", "") if symbol in self.metas else symbol
         symbol_index = self.get_symbol_index(symbol)
         self.transitions[initial_states][symbol_index].add(acceptance_states)
 

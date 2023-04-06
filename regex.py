@@ -28,6 +28,8 @@ class Regex(object):
 
         if self.error_checker.get_size() > 0:
             raise Exception(self.error_checker.get_error_result())
+        
+        self.change_alphabet()
 
     def create_alphabet(self):
         i = 0
@@ -51,19 +53,25 @@ class Regex(object):
 
     def add_concatenation_symbol(self):
         new_expression = ""
-        
         i = 0
         while i < len(self.expression):
+            add_symbol = True
             if i + 1 < len(self.expression):
                 next = self.expression[i + 1]
                 current = self.expression[i]
                 if i + 2 < len(self.expression):
-                    if current == '\\':
+                    if current == '\\' and next != "\\":
                         current += next
                         next = self.expression[i + 2]
+                        add_symbol = True
+                        i += 1
+                else:
+                    if current == '\\' and next != "\\":
+                        current += next
+                        add_symbol = False
                         i += 1
                 new_expression += current
-                if (current != "(" and next != ")") and next not in self.operators and current not in self.binarios:
+                if (current != "(" and next != ")") and next not in self.operators and current not in self.binarios and add_symbol:
                     new_expression += '.'
             else:
                 new_expression += self.expression[i]
@@ -135,6 +143,7 @@ class Regex(object):
             else:
                 o2 = stack.pop()
                 o1 = stack.pop()
+
                 new_node.set_left_child(o1)
                 new_node.set_right_child(o2)
         
@@ -144,6 +153,16 @@ class Regex(object):
 
     def get_AST(self):
         return self.AST
+
+    def change_alphabet(self):
+        list = []
+        metas = ['\+', '\.', '\?', '\*', '\(', '\)']
+        for element in self.alphabet:
+            if element in metas:
+                element = element.replace("\\", "")
+            list.append(element)
+            
+        self.alphabet = list
 
     def build_AST(self):
         output_stack = []

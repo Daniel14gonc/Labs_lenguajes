@@ -34,24 +34,35 @@ class RegexErrorChecker(object):
         stack = []
         i = 0
         string_between_parenthesis = [""]
-        for element in self.expression:
+        j = 0
+        while j < len(self.expression):
+            element = self.expression[j]
             if element == '(':
-                stack.append(element)
-                string_between_parenthesis.append("")
+                if j > 0 and self.expression[j - 1] != '\\':
+                    stack.append(element)
+                    string_between_parenthesis.append("")
+                elif j == 0:
+                    stack.append(element)
+                    string_between_parenthesis.append("")
             elif element == ')':
-                if not stack:
+                if j > 0 and self.expression[j - 1] != "\\":
+                    if not stack:
+                        error = f"Parenthesis mismatch at index: {i}."
+                        self.error_logs.append(error)
+                    else:
+                        stack.pop()
+                        last_string = string_between_parenthesis.pop()
+                        if not last_string:
+                            error = f"Parenthesis do not have anything between them."
+                            self.error_logs.append(error)
+                elif j == 0:
                     error = f"Parenthesis mismatch at index: {i}."
                     self.error_logs.append(error)
-                else:
-                    stack.pop()
-                    last_string = string_between_parenthesis.pop()
-                    if not last_string:
-                        error = f"Parenthesis do not have anything between them."
-                        self.error_logs.append(error)
             else:
                 string_between_parenthesis[-1] += element
             
             i += 1
+            j += 1
 
         if stack:
             error = f"Parenthesis mismatch."
@@ -196,6 +207,9 @@ class Regex(object):
 
         if self.error_checker.get_size() > 0:
             raise Exception(self.error_checker.get_error_result())
+        
+        self.change_alphabet()
+        print(self.alphabet)
 
     def create_alphabet(self):
         i = 0
@@ -219,19 +233,25 @@ class Regex(object):
 
     def add_concatenation_symbol(self):
         new_expression = ""
-        
         i = 0
         while i < len(self.expression):
+            add_symbol = True
             if i + 1 < len(self.expression):
                 next = self.expression[i + 1]
                 current = self.expression[i]
                 if i + 2 < len(self.expression):
-                    if current == '\\':
+                    if current == '\\' and next != "\\":
                         current += next
                         next = self.expression[i + 2]
+                        add_symbol = True
+                        i += 1
+                else:
+                    if current == '\\' and next != "\\":
+                        current += next
+                        add_symbol = False
                         i += 1
                 new_expression += current
-                if (current != "(" and next != ")") and next not in self.operators and current not in self.binarios:
+                if (current != "(" and next != ")") and next not in self.operators and current not in self.binarios and add_symbol:
                     new_expression += '.'
             else:
                 new_expression += self.expression[i]
@@ -303,6 +323,7 @@ class Regex(object):
             else:
                 o2 = stack.pop()
                 o1 = stack.pop()
+
                 new_node.set_left_child(o1)
                 new_node.set_right_child(o2)
         
@@ -312,6 +333,16 @@ class Regex(object):
 
     def get_AST(self):
         return self.AST
+
+    def change_alphabet(self):
+        list = []
+        metas = ['\+', '\.', '\?', '\*', '\(', '\)']
+        for element in self.alphabet:
+            if element in metas:
+                element = element.replace("\\", "")
+            list.append(element)
+            
+        self.alphabet = list
 
     def build_AST(self):
         output_stack = []
@@ -463,6 +494,7 @@ class NFA(FA):
     def __init__(self, regex = None, count = 1) -> None:
         super().__init__(regex)
         self.count = count
+        self.metas = ['\+', '\.', '\?', '\*', '\(', '\)']
         self.root = self.regex.get_root()
         self.build_afn()
         self.error_checker = FAErrorChecker()
@@ -554,6 +586,7 @@ class NFA(FA):
 
     def create_unit(self, node):
         symbol = node.value
+        symbol = symbol.replace("\\", "") if symbol in self.metas else symbol
         first = self.count
         self.count += 1
         last = self.count
@@ -572,6 +605,7 @@ class NFA(FA):
         return dfa
     
     def create_transition(self, initial_states, acceptance_states, symbol):
+        symbol = symbol.replace("\\", "") if symbol in self.metas else symbol
         symbol_index = self.get_symbol_index(symbol)
         self.transitions[initial_states][symbol_index].add(acceptance_states)
 
@@ -673,7 +707,7 @@ class Tokenizer(NFA):
         merged = merged.applymap(tuple_to_set)
         self.alphabet = list(merged.columns)
         self.transitions = merged.apply(lambda row: row.tolist(), axis=1).to_dict()
-regexes = ['(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z),((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','-?(0|1|2|3|4|5|6|7|8|9)++++','\++','\*','=']
+regexes = ['(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z),((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','-?(0|1|2|3|4|5|6|7|8|9)++++','\++','\*','=','\(']
 
 count = 1
 NFAs = []
@@ -696,5 +730,5 @@ for regex in regexes:
 tokenizer = Tokenizer()
 for nfa in NFAs:
     tokenizer.concatenate_FA(nfa)
-# tokenizer.output_image()
+tokenizer.output_image()
 

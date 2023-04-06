@@ -1,6 +1,7 @@
 import re
 from YalexErrorChecker import YalexErrorChecker
 
+ # TODO para formateado: ver reglas de yalex para escape, EOF, espacios en blanco, etc.
 class YalexFormatter(object):
     def __init__(self) -> None:
         self.header_result = ''
@@ -9,16 +10,37 @@ class YalexFormatter(object):
         self.compound_pattern = r"\[(\w)\s*-\s*(\w)\s*(\w)\s*-\s*(\w)\]"
         self.simple_regex_pattern = r"^let\s+\w+\s+=\s+(.*?)$"
         self.error_checker = YalexErrorChecker()
+        self.tokens = []
 
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
         self.errors = self.error_checker.check_errors(self.file_content)
-        print(self.errors)
-        self.build_header()
-        self.clean_comments()
-        self.replace_quotation_mark()
-        self.build_regex()
-        self.build_tokens()
+        try:
+            self.build_header()
+        except:
+            pass
+
+        try:
+            self.clean_comments()
+        except:
+            pass
+
+        try:
+            self.replace_quotation_mark()
+        except:
+            pass
+
+        try:
+            self.build_regex()
+        except:
+            pass
+
+        try:
+            self.build_tokens()
+        except:
+            pass
+        
+        return set(self.errors)
 
     def replace_quotation_mark(self):
         self.file_content = self.file_content.replace('"', " ' ")
@@ -62,6 +84,8 @@ class YalexFormatter(object):
         for element in expressions:
             splitted = element.split('\t', maxsplit=1)
             first_part = splitted[0]
+            if "'" not in first_part and '"' not in first_part and first_part not in self.regex:
+                self.errors.append(f'Error: previous regex definition "{first_part}" does not exist.\n')
             if first_part not in self.regex:
                 first_part = self.common_regex(first_part.split(" "))
             second_part = splitted[1].replace('\t', '')
@@ -78,6 +102,9 @@ class YalexFormatter(object):
         expression = expression.replace('*', '\*')
         expression = expression.replace('"', '')
         expression = expression.replace("'", "")
+        expression = expression.replace("(", "\(")
+        expression = expression.replace(")", "\)")
+        expression = expression.replace("?", "\?")
 
         return expression
 
@@ -122,10 +149,17 @@ class YalexFormatter(object):
                     element = element.replace('+', '\+')
                     element = element.replace('.', '\.')
                     element = element.replace('*', '\*')
+                    element = element.replace('(', '\(')
+                    element = element.replace(')', '\)')
+                    element = element.replace('?', '\?')
                     body += element
             elif not self.check_operators(element) and len(element) > 1:
-                replacement = self.regex[element]
-                body += replacement 
+                if element not in self.regex:
+                    self.errors.append(f'Error: previous regex definition "{element}" does not exist.\n')
+                    body += element
+                else:
+                    replacement = self.regex[element]
+                    body += replacement 
             else:
                 body += element
         return body

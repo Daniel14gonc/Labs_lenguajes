@@ -17,24 +17,35 @@ class RegexErrorChecker(object):
         stack = []
         i = 0
         string_between_parenthesis = [""]
-        for element in self.expression:
+        j = 0
+        while j < len(self.expression):
+            element = self.expression[j]
             if element == '(':
-                stack.append(element)
-                string_between_parenthesis.append("")
+                if j > 0 and self.expression[j - 1] != '\\':
+                    stack.append(element)
+                    string_between_parenthesis.append("")
+                elif j == 0:
+                    stack.append(element)
+                    string_between_parenthesis.append("")
             elif element == ')':
-                if not stack:
+                if j > 0 and self.expression[j - 1] != "\\":
+                    if not stack:
+                        error = f"Parenthesis mismatch at index: {i}."
+                        self.error_logs.append(error)
+                    else:
+                        stack.pop()
+                        last_string = string_between_parenthesis.pop()
+                        if not last_string:
+                            error = f"Parenthesis do not have anything between them."
+                            self.error_logs.append(error)
+                elif j == 0:
                     error = f"Parenthesis mismatch at index: {i}."
                     self.error_logs.append(error)
-                else:
-                    stack.pop()
-                    last_string = string_between_parenthesis.pop()
-                    if not last_string:
-                        error = f"Parenthesis do not have anything between them."
-                        self.error_logs.append(error)
             else:
                 string_between_parenthesis[-1] += element
             
             i += 1
+            j += 1
 
         if stack:
             error = f"Parenthesis mismatch."
