@@ -1,6 +1,11 @@
 from LexerDirector import LexerDirector
+import sys
 
-from Reader import YalexReader
+args = sys.argv
 
-director = LexerDirector()
+path = None
+if len(args) > 1: 
+    path = args[1]
+
+director = LexerDirector(path)
 director.construct_lexer()

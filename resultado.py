@@ -1,3 +1,15 @@
+class Node(object):
+
+    def __init__(self, value) -> None:
+        self.value = value
+        self.right_child = None
+        self.left_child = None
+        
+    def set_right_child(self, node):
+        self.right_child = node
+    
+    def set_left_child(self, node):
+        self.left_child = node
 class AST(object):
     
     def set_root(self, node):
@@ -15,6 +27,146 @@ class AST(object):
                 res += self.postorder_helper(node.left_child)
                 res += self.postorder_helper(node.right_child)
             return res + node.value
+class FAErrorChecker(object):
+    
+    def check_alphabet_errors(self, string, alphabet):
+        self.errors = []
+        for i in range(len(string)):
+            if string[i] not in alphabet and string[i] != 'ε':
+                error = f"Character {string[i]} does not belong to alphabet at position {i}.\n"
+                self.errors.append(error)
+        if self.errors:
+            raise Exception(self.to_string())
+
+    def to_string(self):
+        res = '\n'
+        for error in self.errors:
+            res += error
+
+        return res
+
+
+class STNode(Node):
+    
+    def __init__(self, value) -> None:
+        super().__init__(value)
+        self.nullable = False
+        self.first_pos = set()
+        self.last_pos = set()
+        self.number = None
+
+
+
+class ST(AST):
+    def __init__(self, regex) -> None:
+        super().__init__()
+        self.regex = regex
+        self.alphabet = regex.alphabet
+        self.stack = list(self.regex.to_postfix() + '#.')
+        print(self.stack, 'stack')
+        self.follow_pos = {}
+        self.build_tree()
+        self.count = 1
+        self.post_order_assignment()
+    
+    def post_order_assignment(self):
+        self.assignment_helper(self.root)
+
+    def compute_follow_pos(self, node):
+        if node.value == '*':
+            child = node.left_child
+            last_pos = child.last_pos
+            for element in last_pos:
+                for key in self.follow_pos:
+                    if element in key:
+                        self.follow_pos[key] = self.follow_pos[key].union(child.first_pos)
+        else:
+            right_child = node.right_child
+            left_child = node.left_child
+            last_pos = left_child.last_pos
+            for element in last_pos:
+                for key in self.follow_pos:
+                    if element in key:
+                        self.follow_pos[key] = self.follow_pos[key].union(right_child.first_pos)
+        
+    def get_followpos_table(self):
+        return self.follow_pos
+    
+    def assignment_helper(self, node):
+        if node.value in '|.':
+            self.assignment_helper(node.left_child)
+            self.assignment_helper(node.right_child)
+            if node.value == '.':
+                if node.left_child.nullable:
+                    childs_first_pos = node.left_child.first_pos.union(node.right_child.first_pos)
+                    node.first_pos = childs_first_pos
+                else:
+                    node.first_pos = node.left_child.first_pos
+
+                if node.right_child.nullable:
+                    childs_last_pos = node.left_child.last_pos.union(node.right_child.last_pos)
+                    node.last_pos = childs_last_pos
+                else:
+                    node.last_pos = node.right_child.last_pos
+                node.nullable = node.right_child.nullable and node.left_child.nullable
+                self.compute_follow_pos(node)
+            else:
+                node.first_pos = node.left_child.first_pos.union(node.right_child.first_pos)
+                node.last_pos = node.left_child.last_pos.union(node.right_child.last_pos)
+                node.nullable = node.right_child.nullable or node.left_child.nullable
+
+        if node.value == '*':
+            self.assignment_helper(node.left_child)
+            node.nullable = True
+            node.first_pos = node.first_pos.union(node.left_child.first_pos)
+            node.last_pos = node.last_pos.union(node.left_child.last_pos)
+            self.compute_follow_pos(node)
+        if node.value in self.alphabet or node.value == '#':
+            node.number = self.count
+            self.count += 1
+            if node.value == 'ε':
+                node.nullable = True
+            else:
+                node.first_pos.add(node.number)
+                node.last_pos.add(node.number)
+                self.follow_pos[(node.number, node.value)] = set()
+
+    def build_tree(self):
+        self.root = self.build_helper()
+
+    def build_helper(self):
+        current = self.stack.pop()
+        if len(self.stack) > 1 and current in '+*.' and self.stack[-1] == '\\':
+            current = self.stack.pop() + current
+        
+        node = STNode(current)
+        if current == '#' or current in self.alphabet:
+            return node
+        elif current in '|.':
+            right_child = self.build_helper()
+            left_child = self.build_helper()
+            node.right_child = right_child
+            node.left_child = left_child
+        elif current == '*':
+            child = self.build_helper()
+            node.left_child = child
+        elif current == '+':
+            child = self.build_helper()
+            node.value = '.'
+            node.left_child = child
+            right_child = STNode('*')
+            node.right_child = right_child
+            node.right_child.left_child = child
+        return node
+    
+    def get_last_pos(self):
+        for key in self.follow_pos:
+            if key[1] == '#':
+                return key[0]
+
+
+
+
 class RegexErrorChecker(object):
     def __init__(self, expression) -> None:
         self.error_logs = []
@@ -178,9 +330,9 @@ class AFVisual(object):
     def output_graph(self):
         self.visual_graph.render(directory='output', view=False)
 import re
-from Node import Node
-from AST import AST
-from RegexErrorChecker import RegexErrorChecker
+
+
+
 
 class Regex(object):
     def __init__(self, expression) -> None:
@@ -214,6 +366,8 @@ class Regex(object):
         i = 0
         while i < len(self.expression):
             element = self.expression[i]
+            if element == " ":
+                self.alphabet.append(" ")
             if element == '\\':
                 next = self.expression[i + 1]
                 self.alphabet.append(element + next)
@@ -417,7 +571,7 @@ class FAErrorChecker(object):
             res += error
 
         return res
-from AFVisual import AFVisual
+
 import pandas as pd
 import dataframe_image as dfi
 
@@ -484,9 +638,278 @@ class FA(object):
     def create_table(self, path):
         df = pd.DataFrame.from_dict(self.transitions, orient = 'index', columns=self.alphabet)
         dfi.export(df, 'tables/' + path + '.png')
-from FA import FA
-from DFA import DFA
-from FAErrorChecker import FAErrorChecker
+
+from ST import ST
+
+
+class DFA(FA):
+
+    def __init__(self, regex=None) -> None:
+        super().__init__(regex)
+        self.dead_state = None
+        self.temp_transitions = None
+        if regex:
+            self.build_direct()
+
+        self.error_checker = FAErrorChecker()
+
+    def build_direct(self):
+        count = 1
+        tree = ST(self.regex)
+        table = tree.get_followpos_table()
+        first_state = frozenset(tree.root.first_pos)
+        self.create_special_alphabet()
+        states = {first_state: count}
+        unmarked_states = [first_state]
+        self.build_matrix_entry(count)
+        count += 1
+        pos_augmented = tree.get_last_pos()
+        self.initial_states.add(states[first_state])
+        if pos_augmented in first_state:
+            self.acceptance_states.add(states[first_state])
+
+        while unmarked_states:
+            S = unmarked_states.pop()
+            for symbol in self.special_alphabet:
+                U = set()
+                for state in S:
+                    if (state, symbol) in table:
+                        U = U.union(table[(state, symbol)])
+                            
+                U = frozenset(U)
+                if U not in states:
+                    states[U] = count
+                    if not U:
+                        self.dead_state = count
+                    self.build_matrix_entry(count)
+                    unmarked_states.append(U)
+                    count += 1
+                self.create_transition(states[S], states[U], symbol)
+                if pos_augmented in U:
+                    self.acceptance_states.add(states[U])
+
+        self.alphabet = self.special_alphabet
+        self.temp_transitions = self.transitions
+        self.delete_dead_state()
+        self.set_external_transitions(self.transitions)
+
+    def build_from_NFA(self, NFA):
+        self.regex = NFA.regex
+        self.alphabet = NFA.alphabet
+        self.external_transitions = NFA.transitions
+        self.create_special_alphabet()
+        count_states = 1
+        D_states = {}
+        first_state = frozenset(self.e_closure(NFA.initial_states))
+        D_states[first_state] = count_states
+        self.build_matrix_entry(D_states[first_state])
+        unmarked_states = [first_state]
+        count_states += 1
+
+        self.initial_states = {D_states[first_state]}
+        
+
+        while unmarked_states:
+            T = unmarked_states.pop()
+            self.check_special_state(T, NFA, D_states[T])
+            for symbol in self.special_alphabet:
+                U = frozenset(self.e_closure(self.move(T, symbol)))
+                if U not in D_states:
+                    D_states[U] = count_states
+                    if not U:
+                        self.dead_state = count_states
+                    unmarked_states.append(U)
+                    count_states += 1
+            
+                if D_states[U] not in self.transitions:
+                    self.build_matrix_entry(D_states[U])
+                self.create_transition(D_states[T], D_states[U], symbol) 
+        self.alphabet = self.special_alphabet
+        self.temp_transitions = self.transitions
+        self.delete_dead_state()
+        self.set_external_transitions(self.transitions)
+
+    def check_special_state(self, state, NFA, representation):
+        for element in state:
+            if element in NFA.acceptance_states:
+                self.acceptance_states.add(representation)
+    
+    def create_special_alphabet(self):
+        self.special_alphabet = [element for element in self.alphabet]
+        self.special_alphabet.remove('ε')
+
+    def get_symbol_index_special(self, symbol):
+         for i in range(len(self.special_alphabet)):
+            if self.special_alphabet[i] == symbol:
+                return i
+
+    def create_transition(self, initial_states, acceptance_states, symbol):
+        symbol_index = self.get_symbol_index_special(symbol)
+        self.transitions[initial_states][symbol_index].add(acceptance_states)
+
+    def build_matrix_entry(self, state):
+        entry = [set() for element in self.special_alphabet]
+        self.transitions[state] = entry
+
+    def delete_dead_state(self):
+        transitions = self.transitions.copy()
+        for transition in self.transitions:
+            if transition == self.dead_state:
+                transitions.pop(transition)
+            else:
+                new_element = []
+                for element in self.transitions[transition]:
+                    if self.dead_state in element:
+                        new_element.append(set())
+                    else:
+                        new_element.append(element)
+                transitions[transition] = new_element
+        
+        self.transitions = transitions
+    
+    def get_initial_partition(self):
+        states = self.get_states(self.temp_transitions)
+        acceptance = frozenset({state for state in states if state in self.acceptance_states})
+        non_acceptance = frozenset(states - acceptance)
+        partition = {acceptance, non_acceptance}
+        return partition
+
+    def get_group(self, element, groups, symbol):
+        index = self.get_symbol_index_special(symbol)
+        transition = list(self.temp_transitions[element][index])[0]
+        for group in groups:
+            if transition in group:
+                return list(group)
+            
+    def check_equal(self, tag):
+        last = tag[0]
+        for element in tag:
+            if element != last:
+                return False
+            last = element
+        
+        return True
+
+    def create_partition(self, group, group_tag):
+        group_dict_helper = {}
+        for i in range(len(group_tag)):
+            tag = tuple(group_tag[i])
+            element = group[i]
+            if tag in group_dict_helper:
+                group_dict_helper[tag].add(element)
+            else:
+                group_dict_helper[tag] = {element}
+
+        new_partition = set()
+        for key in group_dict_helper:
+            new_partition.add(frozenset(group_dict_helper[key]))
+
+        return new_partition
+
+    def create_new_partition(self, group, partition):
+        groups = list(partition)
+        group_list = list(group)
+        for symbol in self.alphabet:
+            group_tag = []
+            for element in group_list:
+                group_tag.append(self.get_group(element, groups, symbol))
+            if not self.check_equal(group_tag):
+                return self.create_partition(group_list, group_tag)
+           
+        return {group}
+                
+    def representatives(self, partition):
+        table = {}
+        representatives = []
+        initial = list(self.initial_states)[0]
+        for element in partition:
+            if element:
+                representative = None
+                if self.dead_state in element:
+                    representative = self.dead_state
+                if initial in element:
+                    representative = initial
+                else:
+                    representative = list(element)[0]
+                table[element] = representative
+                representatives.append(representative)
+
+        return representatives, table
+
+    def get_transition_representative(self, element, table):
+        element = list(element)[0]
+        for key in table:
+            if element in key:
+                return table[key]
+
+    def build_new_transitions(self, partition):
+        representatives, table = self.representatives(partition)
+        transitions = {}
+        for element in representatives:
+            if element not in transitions:
+                transitions[element] = [set() for element in self.alphabet]
+            for symbol in self.alphabet:
+                index = self.get_symbol_index(symbol)
+                state = self.temp_transitions[element][index]
+                transition_representative = self.get_transition_representative(state, table)
+                transitions[element][index].add(transition_representative)
+
+        self.transitions = transitions
+
+
+    def minimize(self):
+        partition = self.get_initial_partition()
+        final_partition = self.hopcroft(partition)
+        self.build_new_transitions(final_partition)
+        self.delete_dead_state()
+        self.set_external_transitions(self.transitions)
+
+
+    def hopcroft(self, partition):
+        partition_new = list(partition.copy())
+        for group in partition:
+            if group:
+                new_group = self.create_new_partition(group, partition)
+                partition_new.remove(group)
+                for element in new_group:
+                    partition_new.append(element)
+        
+        partition_new = set(partition_new)
+        
+        if partition_new == partition:
+            return partition
+        else:
+            return self.hopcroft(partition_new)
+    
+    def get_states_with_symbol(self, states, symbol):
+        index = self.get_symbol_index(symbol)
+        result = set()
+        for element in states:
+            for state in self.transitions:
+                if element in self.transitions[state][index]:
+                    result.add(state)
+        
+        return result
+
+    def get_states(self, transitions):
+        return {state for state in transitions}
+    
+    def simulate(self, string):
+        # self.error_checker.check_alphabet_errors(string, self.alphabet)
+        s = self.initial_states
+        string = 'ε' if not string else string
+        for element in string:
+            if element not in self.alphabet:
+                return False
+            if element != 'ε':
+                s = self.move(s, element)
+            
+        if s.intersection(self.acceptance_states):
+            return True
+        return False 
+
+
+
 
 class NFA(FA):
 
@@ -613,12 +1036,9 @@ class NFA(FA):
         self.transitions[state] = entry
 
     def simulate(self, string):
-        # self.error_checker.check_alphabet_errors(string, self.alphabet)
         s = self.e_closure(self.initial_states)
         string = 'ε' if not string else string
         i = 0
-        print(string)
-        print(self.alphabet)
         while i < len(string):
             element = string[i]
             if element == '\\':
@@ -636,7 +1056,7 @@ class NFA(FA):
         return False 
 
 from NFA import NFA
-from regex import Regex
+
 import pandas as pd
 
 # Función para convertir sets a listas
@@ -706,7 +1126,7 @@ class Tokenizer(NFA):
         merged = merged.applymap(tuple_to_set)
         self.alphabet = list(merged.columns)
         self.transitions = merged.apply(lambda row: row.tolist(), axis=1).to_dict()
-regexes = ['(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z),((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','-?(0|1|2|3|4|5|6|7|8|9)++++','\++','\*','a|b','(\(|-?(0|1|2|3|4|5|6|7|8|9)++++)*']
+regexes = ['( |\t| |\n)','/\*','\*/','0xoy']
 
 count = 1
 NFAs = []

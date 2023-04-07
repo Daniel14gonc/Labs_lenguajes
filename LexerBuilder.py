@@ -50,10 +50,16 @@ class LexerBuilder(object):
 
 
     def concat_files_needed(self):
-        files = ["AST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "NFA", "Tokenizer"]
+        files = ["Node", "AST", "FAErrorChecker", "STNode", "ST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "DFA", "NFA", "Tokenizer"]
+        imports = ["from regex import Regex", "from Node import Node", "from AST import AST", 
+                   "from RegexErrorChecker import RegexErrorChecker", "from AFVisual import AFVisual", 
+                   "from FA import FA", "from DFA import DFA",
+                   "from AST import AST", "from STNode import STNode", "from FAErrorChecker import FAErrorChecker"]
         for file in files:
             with open(file + ".py", "rt") as archivo:
                 contenido = archivo.read()
+                for element in imports:
+                    contenido = contenido.replace(element, '')
                 self.file_content.append(contenido)
 
     def concat_functionality(self):
@@ -97,6 +103,7 @@ class LexerBuilder(object):
         tokenizer = Tokenizer()
         for nfa in self.NFAs:
             tokenizer.concatenate_FA(nfa)
+        # print(tokenizer.simulate(''))
         # other = tokenizer.convert_to_DFA()
         # other.minimize()
         # other.output_image()

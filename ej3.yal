@@ -1,0 +1,9 @@
+{
+  open Parser
+}
+
+rule tokens =
+  | [' ' '\t' '\n']		{ tokenize lexbuf }  (* ignorar espacios en blanco *)
+  | "/*"							{ comment lexbuf }   (* ignorar comentarios *)
+  | "*/"							{ tokenize lexbuf }  (* final del comentario *)
+  | "0x"['0'-'9' 'a'-'f']		{tokenize hex}

@@ -35,6 +35,8 @@ class Regex(object):
         i = 0
         while i < len(self.expression):
             element = self.expression[i]
+            if element == " ":
+                self.alphabet.append(" ")
             if element == '\\':
                 next = self.expression[i + 1]
                 self.alphabet.append(element + next)

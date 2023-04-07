@@ -88,14 +88,12 @@ class YalexFormatter(object):
     
     def convert_regexes_to_tuples(self, expressions):
         new_list = []
-        # print(expressions)
         for element in expressions:
             splitted = element.split('\t', maxsplit=1)
             first_part = splitted[0]
-            print(first_part)
             # if "'" not in first_part and '"' not in first_part and first_part not in self.regex:
             #     self.errors.append(f'Error: previous regex definition "{first_part}" does not exist.\n')
-            if first_part not in self.regex:
+            if first_part not in self.regex and first_part.upper() != 'EOF':
                 first_part = self.space_operators(first_part)
                 first_part = self.common_regex(first_part.split(" "))
             second_part = splitted[1].replace('\t', '')
@@ -216,9 +214,9 @@ class YalexFormatter(object):
 
     def common_regex(self, line):
         body = self.build_common_regex(line)
-        body = body.replace('ε', ' ')
         body = self.replace_common_patterns(body)
         body = body.strip()
+        body = body.replace('ε', ' ')
         return body
     
     def check_operators(self, element):
@@ -322,13 +320,26 @@ class YalexFormatter(object):
         return counter
     
     def simple_list(self, list):
-        #print(list)
-        pass
+        i = 0
+        res = '('
+        while i < len(list):
+            element = list[i]
+            if element not in "[]":
+                if element == '\\':
+                    res += '\\' + list[i + 1] + '|'
+                    i += 1
+                else:
+                    res += element + '|'
+            i += 1
+        res = res[:len(res) - 1] + ')'
+        return res
     
+    # TODO: obtener lo que haya antes y despues de [] como el ejemplo de hex de ej3.yal
     def replace_common_patterns(self, regex):
         self.letters = 'abcdefghijklmnopqrstuvwxyz'
         self.upper_letters = self.letters.upper()
         self.numbers = '0123456789'
+        regex = regex.replace('ε', ' ')
         self.search_simple_regex_result = re.search(self.simple_pattern, regex)
         self.search_compound_regex_result = re.search(self.compound_pattern, regex)
         self.search_list = re.search(self.list_pattern, regex)
@@ -337,7 +348,7 @@ class YalexFormatter(object):
         elif self.search_compound_regex_result:
             regex = self.compound_range(regex)
         elif self.search_list:
-            self.simple_list(regex)
+            regex = self.simple_list(regex)
 
         return regex
         
