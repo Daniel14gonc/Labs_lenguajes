@@ -8,38 +8,45 @@ class YalexFormatter(object):
         self.regex = {}
         self.simple_pattern = r"\[(\w)\s*-\s*(\w)\]"
         self.compound_pattern = r"\[(\w)\s*-\s*(\w)\s*(\w)\s*-\s*(\w)\]"
+        self.list_pattern = r"\[[^\[\]]*\]"
         self.simple_regex_pattern = r"^let\s+\w+\s+=\s+(.*?)$"
+        self.token_line_regex = r"\[([^]]*)\]"
         self.error_checker = YalexErrorChecker()
         self.tokens = []
 
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
         self.errors = self.error_checker.check_errors(self.file_content)
-        try:
-            self.build_header()
-        except:
-            pass
+        # try:
+        #     self.build_header()
+        # except:
+        #     pass
 
-        try:
-            self.clean_comments()
-        except:
-            pass
+        # try:
+        #     self.clean_comments()
+        # except:
+        #     pass
 
-        try:
-            self.replace_quotation_mark()
-        except:
-            pass
+        # try:
+        #     self.replace_quotation_mark()
+        # except:
+        #     pass
 
-        try:
-            self.build_regex()
-        except:
-            pass
+        # try:
+        #     self.build_regex()
+        # except:
+        #     pass
 
-        try:
-            self.build_tokens()
-        except:
-            pass
-        
+        # try:
+        #     self.build_tokens()
+        # except:
+        #     pass
+
+        self.build_header()
+        self.clean_comments()
+        self.replace_quotation_mark()
+        self.build_regex()
+        self.build_tokens()
         return set(self.errors)
 
     def replace_quotation_mark(self):
@@ -81,12 +88,15 @@ class YalexFormatter(object):
     
     def convert_regexes_to_tuples(self, expressions):
         new_list = []
+        # print(expressions)
         for element in expressions:
             splitted = element.split('\t', maxsplit=1)
             first_part = splitted[0]
-            if "'" not in first_part and '"' not in first_part and first_part not in self.regex:
-                self.errors.append(f'Error: previous regex definition "{first_part}" does not exist.\n')
+            print(first_part)
+            # if "'" not in first_part and '"' not in first_part and first_part not in self.regex:
+            #     self.errors.append(f'Error: previous regex definition "{first_part}" does not exist.\n')
             if first_part not in self.regex:
+                first_part = self.space_operators(first_part)
                 first_part = self.common_regex(first_part.split(" "))
             second_part = splitted[1].replace('\t', '')
             second_part = second_part.replace('{' , '')
@@ -116,24 +126,54 @@ class YalexFormatter(object):
                 element[0] = self.add_meta_character_string(expression)
             new_list.append(element)
         return new_list
+    
+    def split_token_lines(self, content):
+        lines = content.splitlines()
+        i = 0
+        result = []
+        while i < len(lines):
+            element = lines[i]
+            if element:
+                if element.strip()[0] == '|':
+                    element = element.split('|', maxsplit=1)
+                    element = element[1]
+                    result.append(element)
+                elif element != "" and element != " " and element != "\t" and element != "\n":
+                    result.append(element)
+            i+=1
+        return result
 
     def build_tokens(self):
         content = self.file_content.split('rule tokens =')
         content = self.trim_quotation_marks(content[1])
-        content = content.strip().split('|')
+        content = self.split_token_lines(content)
         content = self.replace_delimiters(content)
         content = self.convert_regexes_to_tuples(content)
         content = self.add_meta_character_token(content)
         content = self.replace_existing_regex(content)
         self.tokens = content
 
+    def check_is_blank(self, content):
+        for element in content:
+            if element != " ":
+                return False
+            
+        return True
+    
+    def replace_blank(self, content):
+        count = 0
+        pass
+
     def trim_quotation_marks(self, line):
         matches = re.findall(r"'([^']+)'", line)
         for element in matches:
             text = element
-            line = line.replace("'" + text + "'", "'" + text.strip() + "'")
-
-
+            replacement = text
+            if not self.check_is_blank(text):
+                replacement = text.strip()
+            else:
+                replacement = re.sub(r'\s+', 'ε', text)
+            line = line.replace("'" + text + "'", "'" + replacement + "'")
         return line
     
     def build_common_regex(self, line):
@@ -190,10 +230,20 @@ class YalexFormatter(object):
     
     def space_operators(self, line):
         operators = '*+|?()'
-        for operator in operators:
-            line = line.replace(operator, ' ' + operator + ' ')
+        cont = 0
+        result = ""
+        for element in line:
+            if element == "'" or element == '"':
+                cont += 1
+            if element in operators:
+                if cont % 2 == 0:
+                    result += ' ' + element + ' '
+                else:
+                    result += element
+            else:
+                result += element
         
-        return line
+        return result
     
     def get_range_of_strings(self, initial, final):
         result = ''
@@ -271,16 +321,23 @@ class YalexFormatter(object):
 
         return counter
     
+    def simple_list(self, list):
+        #print(list)
+        pass
+    
     def replace_common_patterns(self, regex):
         self.letters = 'abcdefghijklmnopqrstuvwxyz'
         self.upper_letters = self.letters.upper()
         self.numbers = '0123456789'
         self.search_simple_regex_result = re.search(self.simple_pattern, regex)
         self.search_compound_regex_result = re.search(self.compound_pattern, regex)
+        self.search_list = re.search(self.list_pattern, regex)
         if self.search_simple_regex_result and not self.search_compound_regex_result:
             regex = self.simple_range(regex)
         elif self.search_compound_regex_result:
             regex = self.compound_range(regex)
+        elif self.search_list:
+            self.simple_list(regex)
 
         return regex
         

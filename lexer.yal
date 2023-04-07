@@ -1,6 +1,6 @@
 (* Ejemplo básico *)
 
-(*let delimitador = [' ''\t''\n']*)
+let delimitador = [' ''\t''\n']
 let hex = ['A'-'2']
 let Lparen = '('
 (*let espacioEnBlanco = delimitador+*)
@@ -14,5 +14,5 @@ rule tokens =
   | numero			{ print("Número\n") }
   | '+'+				{ print("Operador de suma\n") }
   | '*'				{ print("Operador de multiplicación\n") }
-  | '='				{ print("Operador de asignación\n") }
-  | Lparen				{ print("Parentesis\n") }
+  | 'a'|'b'				{ print("Operador de asignación\n") }
+  | (Lparen | numero)*				{ print("Parentesis\n") }
