@@ -4,7 +4,7 @@ let delimitador = [' ''\t''\n']
 let hex = ['A'-'2']
 let Lparen = '('
 let espacioEnBlanco = delimitador+
-let digito = "0x"['0'-'9']
+let digito = ['0'-'9']
 let numero = '-'?digito++++
 let letra = ['a'-'z' 'A'-'Z']
 let identificador = letra','(letra|digito)*
@@ -14,7 +14,7 @@ rule tokens =
   | numero			{ print("Número\n") }
   | '+'+				{ print("Operador de suma\n") }
   | '*'				{ print("Operador de multiplicación\n") }
-  | 'a'|'b'				{ print("Operador de asignación\n") }
+  | '='				{ print("Operador de asignación\n") }
   | numero(numero | numero)*				{ print("Parentesis\n") }
   | espacioEnBlanco				{ print("White\n") }
   | eof				{ print("eof\n") }

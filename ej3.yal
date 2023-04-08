@@ -2,7 +2,11 @@
   open Parser
 }
 
+
+let digito = ['0'-'9']
+
 rule tokens =
+	digito							{tokenize digito}
   | [' ' '\t' '\n']		{ tokenize lexbuf }  (* ignorar espacios en blanco *)
   | "/*"							{ comment lexbuf }   (* ignorar comentarios *)
   | "*/"							{ tokenize lexbuf }  (* final del comentario *)
