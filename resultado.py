@@ -1126,7 +1126,7 @@ class Tokenizer(NFA):
         merged = merged.applymap(tuple_to_set)
         self.alphabet = list(merged.columns)
         self.transitions = merged.apply(lambda row: row.tolist(), axis=1).to_dict()
-regexes = ['( |\t| |\n)','/\*','\*/','0xoy']
+regexes = ['( |\t| |\n)','/\*','\*/','0x(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f)+']
 
 count = 1
 NFAs = []
@@ -1150,4 +1150,3 @@ tokenizer = Tokenizer()
 for nfa in NFAs:
     tokenizer.concatenate_FA(nfa)
 tokenizer.output_image()
-

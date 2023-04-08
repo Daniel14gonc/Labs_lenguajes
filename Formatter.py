@@ -302,12 +302,16 @@ class YalexFormatter(object):
         result = '(' + first_range + '|' + second_range + ')'
         replaced = ''
         i = 0
-        closed = False
-        while not closed:
-            if regex[i] == ']':
-                closed = True
-            replaced += regex[i]
+        count = 0
+        while i < len(regex):
+            element = regex[i]
+            if regex[i] in '[]':
+                replaced += element
+                count += 1
+            if count % 2 != 0 and regex[i] not in '[]':
+                replaced += element
             i += 1
+            
         regex = regex.replace(replaced, result)
         return regex
 
