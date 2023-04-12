@@ -63,7 +63,6 @@ class ST(AST):
         self.regex = regex
         self.alphabet = regex.alphabet
         self.stack = list(self.regex.to_postfix() + '#.')
-        print(self.stack, 'stack')
         self.follow_pos = {}
         self.build_tree()
         self.count = 1
@@ -115,13 +114,14 @@ class ST(AST):
                 node.last_pos = node.left_child.last_pos.union(node.right_child.last_pos)
                 node.nullable = node.right_child.nullable or node.left_child.nullable
 
-        if node.value == '*':
+        elif node.value == '*':
             self.assignment_helper(node.left_child)
             node.nullable = True
             node.first_pos = node.first_pos.union(node.left_child.first_pos)
             node.last_pos = node.last_pos.union(node.left_child.last_pos)
             self.compute_follow_pos(node)
-        if node.value in self.alphabet or node.value == '#':
+        
+        elif self.is_in_alphabet(node.value) or node.value == '#':
             node.number = self.count
             self.count += 1
             if node.value == 'ε':
@@ -129,16 +129,31 @@ class ST(AST):
             else:
                 node.first_pos.add(node.number)
                 node.last_pos.add(node.number)
-                self.follow_pos[(node.number, node.value)] = set()
+                self.follow_pos[(node.number, self.replace_meta(node.value))] = set()
+
+    def is_in_alphabet(self, value):
+        if value in self.alphabet:
+            return True
+        operators = "*.+()"
+        for operator in operators:
+            if operator in value:
+                return True
+        return False
+    
+    def replace_meta(self, value):
+        operators = "*.+()"
+        for operator in operators:
+            if operator in value:
+                value = value.replace('\\', '')
+        return value
 
     def build_tree(self):
         self.root = self.build_helper()
 
     def build_helper(self):
         current = self.stack.pop()
-        if len(self.stack) > 1 and current in '+*.' and self.stack[-1] == '\\':
+        if len(self.stack) >= 1 and current != '\\' and self.stack[-1] == '\\':
             current = self.stack.pop() + current
-        
         node = STNode(current)
         if current == '#' or current in self.alphabet:
             return node
@@ -644,25 +659,25 @@ from ST import ST
 
 class DFA(FA):
 
-    def __init__(self, regex=None) -> None:
+    def __init__(self, regex = None, count = 1) -> None:
         super().__init__(regex)
         self.dead_state = None
         self.temp_transitions = None
         if regex:
-            self.build_direct()
+            self.build_direct(count)
 
         self.error_checker = FAErrorChecker()
 
-    def build_direct(self):
-        count = 1
+    def build_direct(self, counter):
+        self.count = counter
         tree = ST(self.regex)
         table = tree.get_followpos_table()
         first_state = frozenset(tree.root.first_pos)
         self.create_special_alphabet()
-        states = {first_state: count}
+        states = {first_state: self.count}
         unmarked_states = [first_state]
-        self.build_matrix_entry(count)
-        count += 1
+        self.build_matrix_entry(self.count)
+        self.count += 1
         pos_augmented = tree.get_last_pos()
         self.initial_states.add(states[first_state])
         if pos_augmented in first_state:
@@ -678,12 +693,12 @@ class DFA(FA):
                             
                 U = frozenset(U)
                 if U not in states:
-                    states[U] = count
+                    states[U] = self.count
                     if not U:
-                        self.dead_state = count
-                    self.build_matrix_entry(count)
+                        self.dead_state = self.count
+                    self.build_matrix_entry(self.count)
                     unmarked_states.append(U)
-                    count += 1
+                    self.count += 1
                 self.create_transition(states[S], states[U], symbol)
                 if pos_augmented in U:
                     self.acceptance_states.add(states[U])
@@ -1058,6 +1073,7 @@ class NFA(FA):
 from NFA import NFA
 
 import pandas as pd
+import re
 
 # Función para convertir sets a listas
 def set_to_tuple(val):
@@ -1126,28 +1142,44 @@ class Tokenizer(NFA):
         merged = merged.applymap(tuple_to_set)
         self.alphabet = list(merged.columns)
         self.transitions = merged.apply(lambda row: row.tolist(), axis=1).to_dict()
-regexes = ['( |\t|\n)+','(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)((A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)|(0|1|2|3|4|5|6|7|8|9|a|b|c))*','\+','\*','\(','\)','\*\)']
+
+    def edit_meta_alphabet(self):
+        list = ["\\+", "\\.", "\\*", "\\(", "\\)"]
+        new_alphabet = []
+        for element in self.alphabet:
+            if "\\" in element and element not in list:
+                new_element = element[1]
+                new_element = '\\' + new_element
+                escape = new_element.encode().decode('unicode_escape')
+                new_alphabet.append(escape)
+            else:
+                new_alphabet.append(element)
+        self.alphabet = new_alphabet
+regexes = ['(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z),((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','-?(0|1|2|3|4|5|6|7|8|9)++++','\++','\*','=','-?(0|1|2|3|4|5|6|7|8|9)++++(-?(0|1|2|3|4|5|6|7|8|9)++++|-?(0|1|2|3|4|5|6|7|8|9)++++)*','( |\t|\n)+','eof','0x(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f)+']
 
 count = 1
 NFAs = []
 for regex in regexes:
     regex = Regex(regex)
-    nfa = NFA(regex, count)
-    count = nfa.count
-    NFAs.append(nfa)
+    dfa = DFA(regex, count)
+    dfa.minimize()
+    count = dfa.count
+    NFAs.append(dfa)
 
 
 count = 1
 NFAs = []
 for regex in regexes:
     regex = Regex(regex)
-    nfa = NFA(regex, count)
-    count = nfa.count
-    NFAs.append(nfa)
+    dfa = DFA(regex, count)
+    dfa.minimize()
+    count = dfa.count
+    NFAs.append(dfa)
 
 
 tokenizer = Tokenizer()
 for nfa in NFAs:
     tokenizer.concatenate_FA(nfa)
+tokenizer.edit_meta_alphabet()
 tokenizer.output_image()
 

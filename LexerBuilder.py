@@ -42,14 +42,14 @@ class LexerBuilder(object):
             regex = element[0]
             action = element[1]
             self.regexes.append(regex)
-            # try:
-            regex = Regex(regex)
-            nfa = DFA(regex, self.count)
-            
-            self.count = nfa.count
-            self.NFAs.append(nfa)
-            # except Exception as e:
-            #     self.regex_errors.add(e)
+            try:
+                regex = Regex(regex)
+                dfa = DFA(regex, self.count)
+                dfa.minimize()
+                self.count = dfa.count
+                self.NFAs.append(dfa)
+            except Exception as e:
+                self.regex_errors.add(e)
 
 
     def concat_files_needed(self):
@@ -77,9 +77,10 @@ class LexerBuilder(object):
         NFAs = []
         for regex in regexes:
             regex = Regex(regex)
-            nfa = NFA(regex, count)
-            count = nfa.count
-            NFAs.append(nfa)
+            dfa = DFA(regex, count)
+            dfa.minimize()
+            count = dfa.count
+            NFAs.append(dfa)
         """)
         self.functionality.append(nfa_creator)
         tokenizer_concat = textwrap.dedent("""
@@ -111,5 +112,5 @@ class LexerBuilder(object):
         # other = tokenizer.convert_to_DFA()
         # other.minimize()
         # other.output_image()
-        tokenizer.edit_meta_alphabet()
-        tokenizer.output_image()
+        # tokenizer.edit_meta_alphabet()
+        # tokenizer.output_image()

@@ -57,7 +57,6 @@ class Tokenizer(NFA):
         common_keys = list(set(new_alphabet).intersection(set(self.alphabet)))
 
         other_table = pd.DataFrame.from_dict(new_table, orient = 'index', columns=new_alphabet)
-        print(other_table.head())
         other_table = other_table.applymap(set_to_tuple)
         self.build_extra_columns(other_table, self.alphabet, common_keys)
         table = pd.DataFrame.from_dict(self.transitions, orient = 'index', columns=self.alphabet)
@@ -75,7 +74,6 @@ class Tokenizer(NFA):
     def edit_meta_alphabet(self):
         list = ["\\+", "\\.", "\\*", "\\(", "\\)"]
         new_alphabet = []
-        print(self.alphabet)
         for element in self.alphabet:
             if "\\" in element and element not in list:
                 new_element = element[1]
@@ -85,4 +83,3 @@ class Tokenizer(NFA):
             else:
                 new_alphabet.append(element)
         self.alphabet = new_alphabet
-        print(self.alphabet)

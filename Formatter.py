@@ -30,7 +30,6 @@ class YalexFormatter(object):
         # self.replace_quotation_mark()
         # self.build_regex()
         # self.build_tokens()
-        print(self.tokens)
         seen = set()  # conjunto para almacenar los elementos únicos
         unique = []   # lista para almacenar los elementos únicos en orden
 

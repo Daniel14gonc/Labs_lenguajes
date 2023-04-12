@@ -49,7 +49,6 @@ class DFA(FA):
                     self.acceptance_states.add(states[U])
 
         self.alphabet = self.special_alphabet
-        print(self.alphabet)
         self.temp_transitions = self.transitions
         self.delete_dead_state()
         self.set_external_transitions(self.transitions)
