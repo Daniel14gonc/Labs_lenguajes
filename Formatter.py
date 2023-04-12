@@ -17,37 +17,28 @@ class YalexFormatter(object):
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
         self.errors = self.error_checker.check_errors(self.file_content)
-        # try:
-        #     self.build_header()
-        # except:
-        #     pass
+        formatter_funcs = [self.build_header, self.clean_comments, 
+                           self.replace_quotation_mark, self.build_regex, self.build_tokens]
+        for func in formatter_funcs:
+            try:
+                func()
+            except:
+                pass
 
-        # try:
-        #     self.clean_comments()
-        # except:
-        #     pass
+        # self.build_header()
+        # self.clean_comments()
+        # self.replace_quotation_mark()
+        # self.build_regex()
+        # self.build_tokens()
+        print(self.tokens)
+        seen = set()  # conjunto para almacenar los elementos únicos
+        unique = []   # lista para almacenar los elementos únicos en orden
 
-        # try:
-        #     self.replace_quotation_mark()
-        # except:
-        #     pass
-
-        # try:
-        #     self.build_regex()
-        # except:
-        #     pass
-
-        # try:
-        #     self.build_tokens()
-        # except:
-        #     pass
-
-        self.build_header()
-        self.clean_comments()
-        self.replace_quotation_mark()
-        self.build_regex()
-        self.build_tokens()
-        return set(self.errors)
+        for item in self.errors:
+            if item not in seen:
+                seen.add(item)
+                unique.append(item)
+        return set(unique)
 
     def replace_quotation_mark(self):
         self.file_content = self.file_content.replace('"', " ' ")
@@ -65,8 +56,8 @@ class YalexFormatter(object):
         for line in content:
             line = line.strip()
             if line:
-                if re.match(self.simple_regex_pattern, line):
-                    self.add_common_regex(line)
+                if re.match(self.simple_regex_pattern, line.strip()):
+                    self.add_common_regex(line.strip())
 
     def replace_delimiters(self, expression):
         new_list = []
@@ -323,6 +314,7 @@ class YalexFormatter(object):
 
         return counter
     
+    # TODO: arreglar el formateo de una lista
     def simple_list(self, list):
         i = 0
         res = '('

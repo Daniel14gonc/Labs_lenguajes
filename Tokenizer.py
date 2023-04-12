@@ -1,6 +1,7 @@
 from NFA import NFA
 from regex import Regex
 import pandas as pd
+import re
 
 # Función para convertir sets a listas
 def set_to_tuple(val):
@@ -56,6 +57,7 @@ class Tokenizer(NFA):
         common_keys = list(set(new_alphabet).intersection(set(self.alphabet)))
 
         other_table = pd.DataFrame.from_dict(new_table, orient = 'index', columns=new_alphabet)
+        print(other_table.head())
         other_table = other_table.applymap(set_to_tuple)
         self.build_extra_columns(other_table, self.alphabet, common_keys)
         table = pd.DataFrame.from_dict(self.transitions, orient = 'index', columns=self.alphabet)
@@ -69,3 +71,18 @@ class Tokenizer(NFA):
         merged = merged.applymap(tuple_to_set)
         self.alphabet = list(merged.columns)
         self.transitions = merged.apply(lambda row: row.tolist(), axis=1).to_dict()
+
+    def edit_meta_alphabet(self):
+        list = ["\\+", "\\.", "\\*", "\\(", "\\)"]
+        new_alphabet = []
+        print(self.alphabet)
+        for element in self.alphabet:
+            if "\\" in element and element not in list:
+                new_element = element[1]
+                new_element = '\\' + new_element
+                escape = new_element.encode().decode('unicode_escape')
+                new_alphabet.append(escape)
+            else:
+                new_alphabet.append(element)
+        self.alphabet = new_alphabet
+        print(self.alphabet)

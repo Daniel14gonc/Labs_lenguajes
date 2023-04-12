@@ -7,7 +7,6 @@ class ST(AST):
         self.regex = regex
         self.alphabet = regex.alphabet
         self.stack = list(self.regex.to_postfix() + '#.')
-        print(self.stack, 'stack')
         self.follow_pos = {}
         self.build_tree()
         self.count = 1
@@ -59,13 +58,14 @@ class ST(AST):
                 node.last_pos = node.left_child.last_pos.union(node.right_child.last_pos)
                 node.nullable = node.right_child.nullable or node.left_child.nullable
 
-        if node.value == '*':
+        elif node.value == '*':
             self.assignment_helper(node.left_child)
             node.nullable = True
             node.first_pos = node.first_pos.union(node.left_child.first_pos)
             node.last_pos = node.last_pos.union(node.left_child.last_pos)
             self.compute_follow_pos(node)
-        if node.value in self.alphabet or node.value == '#':
+        
+        elif self.is_in_alphabet(node.value) or node.value == '#':
             node.number = self.count
             self.count += 1
             if node.value == 'ε':
@@ -73,16 +73,31 @@ class ST(AST):
             else:
                 node.first_pos.add(node.number)
                 node.last_pos.add(node.number)
-                self.follow_pos[(node.number, node.value)] = set()
+                self.follow_pos[(node.number, self.replace_meta(node.value))] = set()
+
+    def is_in_alphabet(self, value):
+        if value in self.alphabet:
+            return True
+        operators = "*.+()"
+        for operator in operators:
+            if operator in value:
+                return True
+        return False
+    
+    def replace_meta(self, value):
+        operators = "*.+()"
+        for operator in operators:
+            if operator in value:
+                value = value.replace('\\', '')
+        return value
 
     def build_tree(self):
         self.root = self.build_helper()
 
     def build_helper(self):
         current = self.stack.pop()
-        if len(self.stack) > 1 and current in '+*.' and self.stack[-1] == '\\':
+        if len(self.stack) >= 1 and current != '\\' and self.stack[-1] == '\\':
             current = self.stack.pop() + current
-        
         node = STNode(current)
         if current == '#' or current in self.alphabet:
             return node

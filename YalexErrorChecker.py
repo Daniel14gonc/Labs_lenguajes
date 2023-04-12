@@ -49,19 +49,23 @@ class YalexErrorChecker(object):
     def check_unbalanced_comments(self):
         stack = []
         content = self.file_content.split("\n")
+        marks = 0
         i = 1
         for line in content:
             j = 0
             while j < len(line):
                 element = line[j]
-                if element == '(':
-                    if j + 1 < len(line) and line[j + 1] == '*':
-                        stack.append(element)
-                elif element == ')' and line[j - 1] == '*':
-                    if stack:
-                        stack.pop()
-                    else:
-                        self.errors.append(f"Error at line {i}: comment not closed.\n")
+                if element == '"' or element == "'":
+                    marks += 1
+                if marks % 2 == 0:
+                    if element == '(':
+                        if j + 1 < len(line) and line[j + 1] == '*':
+                            stack.append(element)
+                    elif element == ')' and line[j - 1] == '*':
+                        if stack:
+                            stack.pop()
+                        else:
+                            self.errors.append(f"Error at line {i}: comment not closed.\n")
                 j += 1
             i += 1
         if stack:
@@ -109,16 +113,17 @@ class YalexErrorChecker(object):
         if double_marks % 2 != 0:
             self.errors.append("Error: unbalanced double quotation marks.\n")
 
-    def clean_comments(self):
+    def clean_comments(self, content):
         patron = re.compile(r'\(\*.*?\*\)', re.DOTALL)
-        self.file_content = re.sub(patron, '', self.file_content)
+        content = re.sub(patron, '', content)
+        return content
 
     def check_common_regex(self):
-        self.clean_comments()
-        content = self.file_content.split("\n")
+        content = self.clean_comments(self.file_content)
+        content = content.split("\n")
         i = 1
         for line in content:
-            if 'let' in line and not re.match(self.simple_regex_pattern, line):
+            if 'let' in line and not re.match(self.simple_regex_pattern, line.strip()):
                 self.errors.append(f"Error: Invalid declaration of common regex at line {i}.\n")
             i += 1
 
@@ -137,22 +142,25 @@ class YalexErrorChecker(object):
         return not other_symbol
 
     def check_rule_declaration(self):
-        content = self.file_content.split('rule')
-        tokens_body = content[1]
-        tokens_body = tokens_body.split('=', maxsplit=1)
-        if self.check_white_spaces(tokens_body[0]):
-            self.errors.append("Error: There is no identifier in rule declaration.\n")
+        content = self.clean_comments(self.file_content)
+        content = content.split('rule')
+        if len(content) < 2:
+            self.errors.append("Error: Either you defined bad the rule or there are unbalanced comments.\n")
+        else:
+            tokens_body = content[1]
+            tokens_body = tokens_body.split('=', maxsplit=1)
+            if self.check_white_spaces(tokens_body[0]):
+                self.errors.append("Error: There is no identifier in rule declaration.\n")
 
-        if self.check_white_spaces(tokens_body[1]) or self.check_newline_only(tokens_body[1]) or not tokens_body[1]:
-            self.errors.append("Error: There is no body in rule declaration.\n")
+            if self.check_white_spaces(tokens_body[1]) or self.check_newline_only(tokens_body[1]) or not tokens_body[1]:
+                self.errors.append("Error: There is no body in rule declaration.\n")
 
-        i = 0
-        declarations = tokens_body[1].split('\n')
-        for declaration in declarations:
-            if not self.check_white_spaces(declaration):
-                if i == 0 and not re.match(self.initial_token_regex, declaration.strip()):
-                    print(declaration.strip())
-                    self.errors.append(f"Error in token declaration: {declaration}")
-                elif i != 0 and not re.match(self.token_regex, declaration.strip()):
-                    self.errors.append(f"Error in token declaration: {declaration}")
-                i += 1
+            i = 0
+            declarations = tokens_body[1].split('\n')
+            for declaration in declarations:
+                if not self.check_white_spaces(declaration):
+                    if i == 0 and not re.match(self.initial_token_regex, declaration.strip()):
+                        self.errors.append(f"Error in token declaration: {declaration}")
+                    elif i != 0 and not re.match(self.token_regex, declaration.strip()):
+                        self.errors.append(f"Error in token declaration: {declaration}")
+                    i += 1

@@ -4,25 +4,25 @@ from FAErrorChecker import FAErrorChecker
 
 class DFA(FA):
 
-    def __init__(self, regex=None) -> None:
+    def __init__(self, regex = None, count = 1) -> None:
         super().__init__(regex)
         self.dead_state = None
         self.temp_transitions = None
         if regex:
-            self.build_direct()
+            self.build_direct(count)
 
         self.error_checker = FAErrorChecker()
 
-    def build_direct(self):
-        count = 1
+    def build_direct(self, counter):
+        self.count = counter
         tree = ST(self.regex)
         table = tree.get_followpos_table()
         first_state = frozenset(tree.root.first_pos)
         self.create_special_alphabet()
-        states = {first_state: count}
+        states = {first_state: self.count}
         unmarked_states = [first_state]
-        self.build_matrix_entry(count)
-        count += 1
+        self.build_matrix_entry(self.count)
+        self.count += 1
         pos_augmented = tree.get_last_pos()
         self.initial_states.add(states[first_state])
         if pos_augmented in first_state:
@@ -38,17 +38,18 @@ class DFA(FA):
                             
                 U = frozenset(U)
                 if U not in states:
-                    states[U] = count
+                    states[U] = self.count
                     if not U:
-                        self.dead_state = count
-                    self.build_matrix_entry(count)
+                        self.dead_state = self.count
+                    self.build_matrix_entry(self.count)
                     unmarked_states.append(U)
-                    count += 1
+                    self.count += 1
                 self.create_transition(states[S], states[U], symbol)
                 if pos_augmented in U:
                     self.acceptance_states.add(states[U])
 
         self.alphabet = self.special_alphabet
+        print(self.alphabet)
         self.temp_transitions = self.transitions
         self.delete_dead_state()
         self.set_external_transitions(self.transitions)

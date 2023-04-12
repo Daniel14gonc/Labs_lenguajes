@@ -2,6 +2,7 @@ from Reader import YalexReader
 from Formatter import YalexFormatter
 from regex import Regex
 from NFA import NFA
+from DFA import DFA
 from Tokenizer import Tokenizer
 import textwrap
 
@@ -23,9 +24,11 @@ class LexerBuilder(object):
     def errors_exception(self):
         errors = ""
         if self.regex_errors:
+            errors += '\nErrors in regex\n'
             for error in self.regex_errors:
                 errors += str(error)
         if self.yalex_errors:
+            errors += '\nErrors in YAlex\n'
             for error in self.yalex_errors:
                 errors += error
         if errors:
@@ -39,14 +42,14 @@ class LexerBuilder(object):
             regex = element[0]
             action = element[1]
             self.regexes.append(regex)
-            try:
-                regex = Regex(regex)
-                nfa = NFA(regex, self.count)
-                
-                self.count = nfa.count
-                self.NFAs.append(nfa)
-            except Exception as e:
-                self.regex_errors.add(e)
+            # try:
+            regex = Regex(regex)
+            nfa = DFA(regex, self.count)
+            
+            self.count = nfa.count
+            self.NFAs.append(nfa)
+            # except Exception as e:
+            #     self.regex_errors.add(e)
 
 
     def concat_files_needed(self):
@@ -83,6 +86,7 @@ class LexerBuilder(object):
         tokenizer = Tokenizer()
         for nfa in NFAs:
             tokenizer.concatenate_FA(nfa)
+        tokenizer.edit_meta_alphabet()
         tokenizer.output_image()
         """)
         self.functionality.append(nfa_creator)
@@ -107,4 +111,5 @@ class LexerBuilder(object):
         # other = tokenizer.convert_to_DFA()
         # other.minimize()
         # other.output_image()
-        # tokenizer.output_image()
+        tokenizer.edit_meta_alphabet()
+        tokenizer.output_image()
