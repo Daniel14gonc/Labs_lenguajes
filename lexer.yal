@@ -10,12 +10,12 @@ let letra = ['a'-'z' 'A'-'Z']
 let identificador = letra','(letra|digito)*
 
 rule tokens =
-    identificador	{ print("Identificador\n") }
-  | numero			{ print("Número\n") }
-  | '+'+				{ print("Operador de suma\n") }
-  | '*'				{ print("Operador de multiplicación\n") }
-  | '='				{ print("Operador de asignación\n") }
-  | numero(numero | numero)*				{ print("Parentesis\n") }
-  | espacioEnBlanco				{ print("White\n") }
-  | eof				{ print("eof\n") }
-  | "0x"['0'-'9' 'a'-'f']+		{tokenize hex}
+    identificador	{ print("Identificador") }
+  | numero			{ print("Numero") }
+  | '+'+				{ print("Operador de suma") }
+  | '*'				{ print("Operador de multiplicacion") }
+  | '='				{ print("Operador de asignacion") }
+  | numero(numero | numero)*				{ print("Parentesis") }
+  | espacioEnBlanco				{ print("White") }
+  | eof				{ print("eof") }
+  | "0x"['0'-'9' 'a'-'f']+		{print("hex")}
