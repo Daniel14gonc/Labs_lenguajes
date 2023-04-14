@@ -83,3 +83,25 @@ class Tokenizer(NFA):
             else:
                 new_alphabet.append(element)
         self.alphabet = new_alphabet
+
+    def set_actions(self, actions):
+        self.actions = actions
+
+    def begin_simulation(self):
+        self.s = self.e_closure(self.initial_states)
+
+    def simulate_symbol(self, symbol):
+        self.next_transition(symbol)
+
+        # if self.s 
+        # accepted_states = self.s.intersection(self.acceptance_states)
+        # if accepted_states:
+
+
+    def next_transition(self, symbol):
+        symbol = 'ε' if not symbol else symbol
+        element = symbol
+        if element not in self.alphabet:
+            self.s = set()
+        if element != 'ε':
+            self.s = self.e_closure(self.move(self.s, element))

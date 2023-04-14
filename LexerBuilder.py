@@ -1,4 +1,4 @@
-from Reader import YalexReader
+from Reader import Reader
 from Formatter import YalexFormatter
 from regex import Regex
 from NFA import NFA
@@ -13,7 +13,7 @@ class LexerBuilder(object):
         self.regexes = []
     
     def read_lexer_file(self):
-        self.reader = YalexReader(self.path)
+        self.reader = Reader(self.path)
         self.yalex_content = self.reader.read()
     
     def get_tokens_from_yalex(self):
@@ -38,6 +38,8 @@ class LexerBuilder(object):
         self.NFAs = []
         self.count = 1
         self.regex_errors = set()
+        self.actions = {}
+        priority = 0
         for element in self.tokens:
             regex = element[0]
             action = element[1]
@@ -48,9 +50,12 @@ class LexerBuilder(object):
                 dfa.minimize()
                 self.count = dfa.count
                 self.NFAs.append(dfa)
+                final_states = dfa.acceptance_states
+                final_states = frozenset(final_states)
+                self.actions[final_states] = (priority, action)
             except Exception as e:
                 self.regex_errors.add(e)
-
+            priority += 1
 
     def concat_files_needed(self):
         files = ["Node", "AST", "FAErrorChecker", "STNode", "ST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "DFA", "NFA", "Tokenizer"]
@@ -108,9 +113,14 @@ class LexerBuilder(object):
         tokenizer = Tokenizer()
         for nfa in self.NFAs:
             tokenizer.concatenate_FA(nfa)
+        tokenizer.set_actions(self.actions)
         # print(tokenizer.simulate(''))
         # other = tokenizer.convert_to_DFA()
         # other.minimize()
         # other.output_image()
         # tokenizer.edit_meta_alphabet()
         # tokenizer.output_image()
+
+    def evaluate_file(self):
+        content = Reader('file.txt').read()
+        print(content)
