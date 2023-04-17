@@ -17,7 +17,7 @@ class YalexFormatter(object):
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
         self.errors = self.error_checker.check_errors(self.file_content)
-        formatter_funcs = [self.build_header, self.clean_comments, 
+        formatter_funcs = [self.build_header, self.build_trailer, self.clean_comments, 
                            self.replace_quotation_mark, self.build_regex, self.build_tokens]
         for func in formatter_funcs:
             try:
@@ -398,11 +398,18 @@ class YalexFormatter(object):
                 return False
             i += 1
 
+
+    def build_trailer(self):
+        codigo_bloque = self.file_content.split("tokens =")[-1].split("{\n")[-1].split("}")[0]
+        self.trailer_result = codigo_bloque
+        temp = '{\n' + codigo_bloque + '}'
+        self.file_content = self.file_content.replace(temp, '')
+
     def get_header(self):
-        pass
+        return self.header_result
 
     def get_regex(self):
         pass
 
     def get_trailer(self):
-        pass
+        return self.trailer_result

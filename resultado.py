@@ -1,3 +1,4 @@
+
 class Reader(object):
 
     def __init__(self, path) -> None:
@@ -1304,4 +1305,6 @@ if errors:
     raise Exception(error_output)
 
 output_tokens(tokens)
+
+import re
 

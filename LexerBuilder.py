@@ -20,6 +20,8 @@ class LexerBuilder(object):
         formatter = YalexFormatter()
         self.yalex_errors = formatter.format_yalex_content(self.yalex_content)
         self.tokens = formatter.tokens
+        self.header = textwrap.dedent(formatter.get_header())
+        self.trailer = textwrap.dedent(formatter.get_trailer())
 
     def errors_exception(self):
         errors = ""
@@ -184,10 +186,12 @@ class LexerBuilder(object):
     def write_to_file(self):
 
         with open("resultado.py", "wt") as file:
+            file.write(self.header + '\n')
             for content in self.file_content:
                 file.write(content + '\n')
             for function in self.functionality:
                 file.write(function.replace('\t', '') + '\n')
+            file.write(self.trailer + '\n')
             
     
     # TODO: Arreglar para poder almacenar que tokens van segun estado de aceptacion.

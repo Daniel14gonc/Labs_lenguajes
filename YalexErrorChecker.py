@@ -148,6 +148,9 @@ class YalexErrorChecker(object):
             self.errors.append("Error: Either you defined bad the rule or there are unbalanced comments.\n")
         else:
             tokens_body = content[1]
+            codigo_bloque = tokens_body.split("tokens =")[-1].split("{\n")[-1].split("}")[0]
+            temp = '{\n' + codigo_bloque + '}'
+            tokens_body = tokens_body.replace(temp, '')
             tokens_body = tokens_body.split('=', maxsplit=1)
             if self.check_white_spaces(tokens_body[0]):
                 self.errors.append("Error: There is no identifier in rule declaration.\n")

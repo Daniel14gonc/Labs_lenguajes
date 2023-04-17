@@ -1,3 +1,5 @@
+
+
 	let delim = [' ''\t''\n']
  let ws = delim+
 let letter = ['A'-'Z''a'-'z']
@@ -21,4 +23,6 @@ rule tokens =
   	| ')'				{ return RPAREN }
 	| '*)'				{ return STARTCOMMENT }
 
-(* Introducir cualquier trailer aqui *)
+{
+	import re
+}
