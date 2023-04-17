@@ -88,18 +88,47 @@ class Tokenizer(NFA):
         self.actions = actions
 
     def begin_simulation(self):
+        self.accepted_states = set()
         self.s = self.e_closure(self.initial_states)
 
     def simulate_symbol(self, symbol):
-        self.next_transition(symbol)
-
-        # if self.s 
-        # accepted_states = self.s.intersection(self.acceptance_states)
-        # if accepted_states:
-
-
-    def next_transition(self, symbol):
         symbol = 'ε' if not symbol else symbol
+        self._next_transition(symbol)
+    
+    def is_accepted(self):
+        self.accepted_states = self.s.intersection(self.acceptance_states)
+        if self.accepted_states:
+            return True
+        
+        return False
+
+    def get_token(self):
+        tokens = []
+        for state in self.accepted_states:
+            for key in self.actions:
+                if state in key:
+                    tokens.append(self.actions[key])
+
+        max = -1
+        max_token = None
+        for token in tokens:
+            if token[0] > max:
+                max = token[0]
+                max_token = token[1]
+        
+        return max_token
+
+    def has_transitions(self):
+        for state in self.s:
+            transitions = self.transitions[state]
+            for resultant_state in transitions:
+                if resultant_state != set():
+                    return True
+        
+        return False
+
+
+    def _next_transition(self, symbol):
         element = symbol
         if element not in self.alphabet:
             self.s = set()

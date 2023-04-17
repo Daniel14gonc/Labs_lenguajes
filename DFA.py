@@ -16,6 +16,7 @@ class DFA(FA):
     def build_direct(self, counter):
         self.count = counter
         tree = ST(self.regex)
+        self.alphabet = self.regex.change_alphabet().copy()
         table = tree.get_followpos_table()
         first_state = frozenset(tree.root.first_pos)
         self.create_special_alphabet()

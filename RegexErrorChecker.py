@@ -23,10 +23,10 @@ class RegexErrorChecker(object):
             if element == '(':
                 if j > 0 and self.expression[j - 1] != '\\':
                     stack.append(element)
-                    string_between_parenthesis.append("")
+                    string_between_parenthesis.append("a")
                 elif j == 0:
                     stack.append(element)
-                    string_between_parenthesis.append("")
+                    string_between_parenthesis.append("a")
             elif element == ')':
                 if j > 0 and self.expression[j - 1] != "\\":
                     if not stack:

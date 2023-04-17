@@ -29,7 +29,7 @@ class Regex(object):
         if self.error_checker.get_size() > 0:
             raise Exception(self.error_checker.get_error_result())
         
-        self.change_alphabet()
+        # self.change_alphabet()
 
     def create_alphabet(self):
         i = 0
@@ -163,8 +163,8 @@ class Regex(object):
             if element in metas:
                 element = element.replace("\\", "")
             list.append(element)
-            
-        self.alphabet = list
+        return list
+        # self.alphabet = list
 
     def build_AST(self):
         output_stack = []

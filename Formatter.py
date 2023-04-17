@@ -121,8 +121,8 @@ class YalexFormatter(object):
         result = []
         while i < len(lines):
             element = lines[i]
-            if element:
-                if element.strip()[0] == '|':
+            if element and element != '\t' and element != '\n':
+                if element.strip()[0] ==  '|':
                     element = element.split('|', maxsplit=1)
                     element = element[1]
                     result.append(element)

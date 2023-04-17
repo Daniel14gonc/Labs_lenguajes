@@ -14,6 +14,7 @@ class NFA(FA):
 
     
     def build_afn(self):
+        self.alphabet = self.regex.change_alphabet().copy()
         first, last = self.build_helper(self.root)
         self.initial_states.add(first)
         self.acceptance_states.add(last)

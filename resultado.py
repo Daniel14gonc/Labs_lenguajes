@@ -1,3 +1,13 @@
+class Reader(object):
+
+    def __init__(self, path) -> None:
+        self.path = path
+    
+    def read(self):
+        file = open(self.path, 'r')
+        self.file_content = file.read()
+        file.close()
+        return self.file_content
 class Node(object):
 
     def __init__(self, value) -> None:
@@ -207,10 +217,10 @@ class RegexErrorChecker(object):
             if element == '(':
                 if j > 0 and self.expression[j - 1] != '\\':
                     stack.append(element)
-                    string_between_parenthesis.append("")
+                    string_between_parenthesis.append("a")
                 elif j == 0:
                     stack.append(element)
-                    string_between_parenthesis.append("")
+                    string_between_parenthesis.append("a")
             elif element == ')':
                 if j > 0 and self.expression[j - 1] != "\\":
                     if not stack:
@@ -375,7 +385,7 @@ class Regex(object):
         if self.error_checker.get_size() > 0:
             raise Exception(self.error_checker.get_error_result())
         
-        self.change_alphabet()
+        # self.change_alphabet()
 
     def create_alphabet(self):
         i = 0
@@ -509,8 +519,8 @@ class Regex(object):
             if element in metas:
                 element = element.replace("\\", "")
             list.append(element)
-            
-        self.alphabet = list
+        return list
+        # self.alphabet = list
 
     def build_AST(self):
         output_stack = []
@@ -671,6 +681,7 @@ class DFA(FA):
     def build_direct(self, counter):
         self.count = counter
         tree = ST(self.regex)
+        self.alphabet = self.regex.change_alphabet().copy()
         table = tree.get_followpos_table()
         first_state = frozenset(tree.root.first_pos)
         self.create_special_alphabet()
@@ -938,6 +949,7 @@ class NFA(FA):
 
     
     def build_afn(self):
+        self.alphabet = self.regex.change_alphabet().copy()
         first, last = self.build_helper(self.root)
         self.initial_states.add(first)
         self.acceptance_states.add(last)
@@ -1158,32 +1170,138 @@ class Tokenizer(NFA):
 
     def set_actions(self, actions):
         self.actions = actions
-        print(self.actions)
-regexes = ['(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z),((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','-?(0|1|2|3|4|5|6|7|8|9)++++','\++','\*','=','-?(0|1|2|3|4|5|6|7|8|9)++++(-?(0|1|2|3|4|5|6|7|8|9)++++|-?(0|1|2|3|4|5|6|7|8|9)++++)*','( |\t|\n)+','eof','0x(0|1|2|3|4|5|6|7|8|9|a|b|c|d|e|f)+']
+
+    def begin_simulation(self):
+        self.accepted_states = set()
+        self.s = self.e_closure(self.initial_states)
+
+    def simulate_symbol(self, symbol):
+        symbol = 'ε' if not symbol else symbol
+        self._next_transition(symbol)
+    
+    def is_accepted(self):
+        self.accepted_states = self.s.intersection(self.acceptance_states)
+        if self.accepted_states:
+            return True
+        
+        return False
+
+    def get_token(self):
+        tokens = []
+        for state in self.accepted_states:
+            for key in self.actions:
+                if state in key:
+                    tokens.append(self.actions[key])
+
+        max = -1
+        max_token = None
+        for token in tokens:
+            if token[0] > max:
+                max = token[0]
+                max_token = token[1]
+        
+        return max_token
+
+    def has_transitions(self):
+        for state in self.s:
+            transitions = self.transitions[state]
+            for resultant_state in transitions:
+                if resultant_state != set():
+                    return True
+        
+        return False
+
+
+    def _next_transition(self, symbol):
+        element = symbol
+        if element not in self.alphabet:
+            self.s = set()
+        if element != 'ε':
+            self.s = self.e_closure(self.move(self.s, element))
+regexes = ['( |\t|\n)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|0x(0|1|2|3|4|5|6|7|8|9)+)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)(0x(0|1|2|3|4|5|6|7|8|9)+)+','-?(0|1|2|3|4|5|6|7|8|9)+','\+','\*','=','-?(0|1|2|3|4|5|6|7|8|9)+\.-?(0|1|2|3|4|5|6|7|8|9)+']
+actions_tokens = [(0, 'pass'), (1, "print(  'Identificador'  )"), (2, "print(  'Identificador2'  )"), (3, "print(  'Número'  )"), (4, "print(  'Operador de suma'  )"), (5, "print(  'Operador de multiplicación'  )"), (6, "print(  'Operador de asignación'  )"), (7, "print(  'Float'  )")]
 
 count = 1
 NFAs = []
+priority = 0
+actions = {}
 for regex in regexes:
     regex = Regex(regex)
     dfa = DFA(regex, count)
     dfa.minimize()
     count = dfa.count
     NFAs.append(dfa)
-
-
-count = 1
-NFAs = []
-for regex in regexes:
-    regex = Regex(regex)
-    dfa = DFA(regex, count)
-    dfa.minimize()
-    count = dfa.count
-    NFAs.append(dfa)
+    final_states = dfa.acceptance_states
+    final_states = frozenset(final_states)
+    actions[final_states] = actions_tokens[priority]
+    priority += 1
 
 
 tokenizer = Tokenizer()
 for nfa in NFAs:
     tokenizer.concatenate_FA(nfa)
 tokenizer.edit_meta_alphabet()
-tokenizer.output_image()
+
+
+def evaluate_file(path):
+    content = Reader(path).read()
+    return content
+
+
+def output_tokens(tokens):
+    for token in tokens:
+        exec(token)
+
+
+import sys
+
+args = sys.argv
+
+path = None
+if len(args) > 1: 
+    path = args[1]
+else:
+    raise Exception("Source code not specified.")
+tokenizer.set_actions(actions)
+source = evaluate_file(path)
+initial = 0
+advance = 0
+latest_token = None
+line = 0
+line_pos = -1
+errors = []
+tokens = []
+
+while initial < len(source):
+    advance = initial
+    tokenizer.begin_simulation()
+    longest_lexeme = False
+    latest_token = None
+    while not longest_lexeme and advance < len(source):
+        symbol = source[advance]
+        tokenizer.simulate_symbol(symbol)
+        accepted = tokenizer.is_accepted()
+        has_transitions = tokenizer.has_transitions()
+        longest_lexeme = not (accepted or has_transitions)
+        if not (longest_lexeme and latest_token):
+            latest_token = tokenizer.get_token()
+            advance += 1
+            line_pos += 1
+            if symbol == '\n':
+                line += 1
+                line_pos = -1
+
+    if latest_token:
+        tokens.append(latest_token)
+    else:
+        errors.append(f"Lexical error on line {line} at position {line_pos}.\n")
+    initial = advance
+
+if errors:
+    error_output = "\nLexical errors:\n"
+    for error in errors:
+        error_output += error
+    raise Exception(error_output)
+
+output_tokens(tokens)
 
