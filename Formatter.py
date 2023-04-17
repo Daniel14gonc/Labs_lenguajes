@@ -76,17 +76,39 @@ class YalexFormatter(object):
             new_list.append(element)
         return new_list
     
+    def get_splitted_expression(self, expression):
+        acu = ''
+        inside_code = False
+        tokens = []
+        action = ''
+        for element in expression:
+            if element == '{':
+                inside_code = True
+            elif element == '}':
+                inside_code = False
+                tokens.append(acu.strip())
+                tokens.append(action)
+                acu = ''
+                action = ''
+            elif inside_code:
+                action += element
+            else:
+                acu += element
+        return tokens
+    
     def convert_regexes_to_tuples(self, expressions):
         new_list = []
         for element in expressions:
-            splitted = element.split('\t', maxsplit=1)
+            # self.get_splitted_expression(element)
+            splitted = self.get_splitted_expression(element)
             first_part = splitted[0]
             # if "'" not in first_part and '"' not in first_part and first_part not in self.regex:
             #     self.errors.append(f'Error: previous regex definition "{first_part}" does not exist.\n')
             if first_part not in self.regex and first_part.upper() != 'EOF':
                 first_part = self.space_operators(first_part)
                 first_part = self.common_regex(first_part.split(" "))
-            second_part = splitted[1].replace('\t', '')
+            second_part = splitted[1]
+            # second_part = second_part.replace('\t', '')
             second_part = second_part.replace('{' , '')
             second_part = second_part.replace('}', '')
             second_part = second_part.strip()
@@ -116,20 +138,18 @@ class YalexFormatter(object):
         return new_list
     
     def split_token_lines(self, content):
-        lines = content.splitlines()
-        i = 0
-        result = []
-        while i < len(lines):
-            element = lines[i]
-            if element and element != '\t' and element != '\n':
-                if element.strip()[0] ==  '|':
-                    element = element.split('|', maxsplit=1)
-                    element = element[1]
-                    result.append(element)
-                elif element != "" and element != " " and element != "\t" and element != "\n":
-                    result.append(element)
-            i+=1
-        return result
+        acu = ''
+        tokens = []
+        for character in content:
+            acu += character
+            if character == '}':
+                acu = acu.strip()
+                if acu[0] == '|':
+                    acu = acu[1:]
+                tokens.append(acu.strip())
+                acu = ''
+                action = ''
+        return tokens
 
     def build_tokens(self):
         content = self.file_content.split('rule tokens =')

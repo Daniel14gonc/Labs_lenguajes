@@ -155,12 +155,29 @@ class YalexErrorChecker(object):
             if self.check_white_spaces(tokens_body[1]) or self.check_newline_only(tokens_body[1]) or not tokens_body[1]:
                 self.errors.append("Error: There is no body in rule declaration.\n")
 
-            i = 0
-            declarations = tokens_body[1].split('\n')
-            for declaration in declarations:
-                if not self.check_white_spaces(declaration):
-                    if i == 0 and not re.match(self.initial_token_regex, declaration.strip()):
-                        self.errors.append(f"Error in token declaration: {declaration}")
-                    elif i != 0 and not re.match(self.token_regex, declaration.strip()):
-                        self.errors.append(f"Error in token declaration: {declaration}")
+            i = 1
+            initial = True
+            acu = ''
+            for element in tokens_body[1]:
+                acu += element
+                if element == '}':
+                    if not initial:
+                        if not re.match(self.token_regex, acu.strip()):
+                            self.errors.append(f"Error in token declaration number: {i}")
+                    else:
+                        if not re.match(self.initial_token_regex, acu.strip()):
+                            self.errors.append(f"Error in token declaration number: {i}")
+                    initial = False
+                    acu = ''
                     i += 1
+
+
+
+            # declarations = tokens_body[1].split('\n')
+            # for declaration in declarations:
+            #     if not self.check_white_spaces(declaration):
+            #         if i == 0 and not re.match(self.initial_token_regex, declaration.strip()):
+            #             self.errors.append(f"Error in token declaration: {declaration}")
+            #         elif i != 0 and not re.match(self.token_regex, declaration.strip()):
+            #             self.errors.append(f"Error in token declaration: {declaration}")
+            #         i += 1

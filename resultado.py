@@ -1218,8 +1218,8 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
-regexes = ['( |\t|\n)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|0x(0|1|2|3|4|5|6|7|8|9)+)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)(0x(0|1|2|3|4|5|6|7|8|9)+)+','-?(0|1|2|3|4|5|6|7|8|9)+','\+','\*','=','-?(0|1|2|3|4|5|6|7|8|9)+\.-?(0|1|2|3|4|5|6|7|8|9)+']
-actions_tokens = [(0, 'pass'), (1, "print(  'Identificador'  )"), (2, "print(  'Identificador2'  )"), (3, "print(  'Número'  )"), (4, "print(  'Operador de suma'  )"), (5, "print(  'Operador de multiplicación'  )"), (6, "print(  'Operador de asignación'  )"), (7, "print(  'Float'  )")]
+regexes = ['( |\t|\n)+','(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)((A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)|(0|1|2|3|4|5|6|7|8|9))*','\+','\*','\(','\)','\*\)']
+actions_tokens = [(0, 'return NONE'), (1, 'if t.value = 0: return ID\t\t\t\telse:\t\t\t\t\treturn NONE'), (2, 'return PLUS'), (3, 'return TIMES'), (4, 'return LPAREN'), (5, 'return RPAREN'), (6, 'return STARTCOMMENT')]
 
 count = 1
 NFAs = []

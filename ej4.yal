@@ -1,16 +1,21 @@
 	let delim = [' ''\t''\n']
  let ws = delim+
-let letter = ['A'-'Z''a'-'z'] 
+let letter = ['A'-'Z''a'-'z']
 
 let digit = ['0123456789']
    let id = letter (letter | digit)*
 
 rule tokens =
-    ws			{return NONE}
+    ws	{return NONE}
 
-	| id			{return id}         (* Cambie por una acción válida, que devuelva el token *)
+	| id		{
+				if t.value = 0: return ID
+				else:
+					return NONE
 
-	| 'abc+d'					{ return PLUS }
+	}					(* Cambie por una acción válida, que devuelva el token *)
+
+	| '+'				{return PLUS }
   	| '*'				{ return TIMES }
   	| '('				{ return LPAREN }
   	| ')'				{ return RPAREN }
