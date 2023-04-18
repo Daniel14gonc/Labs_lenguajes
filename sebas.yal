@@ -14,6 +14,7 @@ let integer = digits
 let float = digits('.'digits)
 let letra = ['a'-'z''A'-'Z']
 let identificador = letra(letra|digit)*
+let hex = '#'integer
 
 
 
@@ -35,6 +36,7 @@ rule tokens =
   | 'while'      { print("WHILE") }
   | 'for'        { print("FOR") }
   | identificador { print("IDENTIFICADOR") }
+  | hex { print("HEX") }
 
 {
     import re

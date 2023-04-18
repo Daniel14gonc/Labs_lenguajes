@@ -6,7 +6,7 @@ class ST(AST):
         super().__init__()
         self.regex = regex
         self.alphabet = regex.alphabet
-        self.stack = list(self.regex.to_postfix() + '#.')
+        self.stack = list(self.regex.to_postfix() + '\#.')
         self.follow_pos = {}
         self.build_tree()
         self.count = 1
@@ -65,7 +65,7 @@ class ST(AST):
             node.last_pos = node.last_pos.union(node.left_child.last_pos)
             self.compute_follow_pos(node)
         
-        elif self.is_in_alphabet(node.value) or node.value == '#':
+        elif self.is_in_alphabet(node.value) or node.value == '\#':
             node.number = self.count
             self.count += 1
             if node.value == 'ε':
@@ -99,7 +99,7 @@ class ST(AST):
         if len(self.stack) >= 1 and current != '\\' and self.stack[-1] == '\\':
             current = self.stack.pop() + current
         node = STNode(current)
-        if current == '#' or current in self.alphabet:
+        if current == '\#' or current in self.alphabet:
             return node
         elif current in '|.':
             right_child = self.build_helper()
@@ -120,7 +120,7 @@ class ST(AST):
     
     def get_last_pos(self):
         for key in self.follow_pos:
-            if key[1] == '#':
+            if key[1] == '\#':
                 return key[0]
 
 

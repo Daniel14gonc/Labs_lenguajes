@@ -1,3 +1,4 @@
+clavos = 'abc'
 
 class Reader(object):
 
@@ -73,7 +74,7 @@ class ST(AST):
         super().__init__()
         self.regex = regex
         self.alphabet = regex.alphabet
-        self.stack = list(self.regex.to_postfix() + '#.')
+        self.stack = list(self.regex.to_postfix() + '\#.')
         self.follow_pos = {}
         self.build_tree()
         self.count = 1
@@ -132,7 +133,7 @@ class ST(AST):
             node.last_pos = node.last_pos.union(node.left_child.last_pos)
             self.compute_follow_pos(node)
         
-        elif self.is_in_alphabet(node.value) or node.value == '#':
+        elif self.is_in_alphabet(node.value) or node.value == '\#':
             node.number = self.count
             self.count += 1
             if node.value == 'ε':
@@ -165,8 +166,9 @@ class ST(AST):
         current = self.stack.pop()
         if len(self.stack) >= 1 and current != '\\' and self.stack[-1] == '\\':
             current = self.stack.pop() + current
+        print(current)
         node = STNode(current)
-        if current == '#' or current in self.alphabet:
+        if current == '\#' or current in self.alphabet:
             return node
         elif current in '|.':
             right_child = self.build_helper()
@@ -187,7 +189,7 @@ class ST(AST):
     
     def get_last_pos(self):
         for key in self.follow_pos:
-            if key[1] == '#':
+            if key[1] == '\#':
                 return key[0]
 
 
@@ -515,7 +517,7 @@ class Regex(object):
 
     def change_alphabet(self):
         list = []
-        metas = ['\+', '\.', '\?', '\*', '\(', '\)']
+        metas = ['\+', '\.', '\?', '\*', '\(', '\)', '\#']
         for element in self.alphabet:
             if element in metas:
                 element = element.replace("\\", "")
@@ -1219,8 +1221,8 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
-regexes = ['( |\t| |\n)','(0|1|2|3|4|5|6|7|8|9)+','\+','-','\*','/']
-actions_tokens = [(0, ''), (1, "print( 'int' )"), (2, "print(  'PLUS'  )"), (3, "print(  'MINUS'  )"), (4, "print(  'TIMES'  )"), (5, "print(  'DIVIDE'  )")]
+regexes = ['( |\t|\n)+','(0|1|2|3|4|5|6|7|8|9)+','(0|1|2|3|4|5|6|7|8|9)+(\.(0|1|2|3|4|5|6|7|8|9)+)','\+','\*','\(','\)','-','/','=','eof','if','then','else','while','for','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','#(0|1|2|3|4|5|6|7|8|9)+']
+actions_tokens = [(0, 'print(clavos)'), (1, "print(  'INTEGER'  )"), (2, "print(  'FLOAT'  )"), (3, "print(  'PLUS'  )"), (4, "print(  'POR'  )"), (5, "print(  'LPAREN'  )"), (6, "print(  'RPAREN'  )"), (7, "print(  'MINUS'  )"), (8, "print(  'DIV'  )"), (9, "print(  'EQUALS'  )"), (10, "print(  'EOF'  )"), (11, "print(  'IF'  )"), (12, "print(  'THEN'  )"), (13, "print(  'ELSE'  )"), (14, "print(  'WHILE'  )"), (15, "print(  'FOR'  )"), (16, "print(  'IDENTIFICADOR'  )"), (17, "print(  'HEX'  )")]
 
 count = 1
 NFAs = []
@@ -1306,4 +1308,5 @@ if errors:
 
 output_tokens(tokens)
 
+import re
 

@@ -158,7 +158,7 @@ class Regex(object):
 
     def change_alphabet(self):
         list = []
-        metas = ['\+', '\.', '\?', '\*', '\(', '\)']
+        metas = ['\+', '\.', '\?', '\*', '\(', '\)', '\#']
         for element in self.alphabet:
             if element in metas:
                 element = element.replace("\\", "")
