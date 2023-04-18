@@ -14,10 +14,16 @@ class YalexFormatter(object):
         self.error_checker = YalexErrorChecker()
         self.tokens = []
 
+    def get_token_name(self):
+        content = self.file_content.split("rule")[1]
+        token_name = content.split("=")[0]
+        self.token_name = token_name
+
     def format_yalex_content(self, yalex_content):
         self.file_content = yalex_content
+        self.get_token_name()
         self.errors = self.error_checker.check_errors(self.file_content)
-        formatter_funcs = [self.build_header, self.build_trailer, self.clean_comments, 
+        formatter_funcs = [self.clean_comments, self.build_header, self.build_trailer, 
                            self.replace_quotation_mark, self.build_regex, self.build_tokens]
         for func in formatter_funcs:
             try:
@@ -400,10 +406,28 @@ class YalexFormatter(object):
 
 
     def build_trailer(self):
-        codigo_bloque = self.file_content.split("tokens =")[-1].split("{\n")[-1].split("}")[0]
-        self.trailer_result = codigo_bloque
-        temp = '{\n' + codigo_bloque + '}'
-        self.file_content = self.file_content.replace(temp, '')
+    
+        if self.check_trailer():
+            codigo_bloque = self.file_content.split("tokens =")[-1].split("{\n")[-1].split("}")[0]
+            self.trailer_result = codigo_bloque
+            temp = '{\n' + codigo_bloque + '}'
+            self.file_content = self.file_content.replace(temp, '')
+        else:
+            self.trailer_result = ''
+
+    def check_trailer(self):
+        content = self.file_content.split("rule" + self.token_name + "=")[1]
+        content = content.splitlines()
+        i = 0
+        for element in content:
+            if element and element != '\t' and not self.check_is_blank(element):
+                if i != 0:
+                    if '{' in element and '|' not in element:
+                        return True
+                else:    
+                    i += 1
+                         
+        return False
 
     def get_header(self):
         return self.header_result

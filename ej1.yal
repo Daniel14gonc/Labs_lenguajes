@@ -1,7 +1,7 @@
 rule tokens =
-	[' ' '\t' '\n']		{ tokenize lexbuf }  (* ignorar espacios en blanco *)
-  |  ['0'-'9']+				{ INT (int_of_string num) }
-  | '+'								{ PLUS }
-  | '-'								{ MINUS }
-  | '*'								{ TIMES }
-  | '/'								{ DIVIDE }
+	[' ' '\t' '\n']		{ }  (* ignorar espacios en blanco *)
+  |  ['0'-'9']+				{ print('int') }
+  | '+'								{ print("PLUS") }
+  | '-'								{ print("MINUS") }
+  | '*'								{ print("TIMES") }
+  | '/'								{ print("DIVIDE") }
