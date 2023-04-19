@@ -3,7 +3,7 @@
 (* Introducir cualquier header aqui *)
 
 {
-    clavos = 'abc'
+    a = 6
 }
 
 let delim = [' '' \t''\n'] (*Comentario que estorba*)
@@ -19,10 +19,17 @@ let hex = '"'integer
 
 
 rule otro = 
-    ws        { print(clavos) }               (* Cambie por una acción válida, que devuelva el token *)
+    ws        { print(a) }               (* Cambie por una acción válida, que devuelva el token *)
   | integer    { print("INTEGER") }
   | float      { print("{FLOAT}") }
-  | '+'       { print("PLUS") }
+  | '+'         
+  { 
+    if a == 5:
+        print('a') 
+    else:
+        print('b')
+    }
+        
   | '*'       { print("POR") }
   | '('       { print("LPAREN") }
   | ')'       { print("RPAREN") }

@@ -1,5 +1,6 @@
 import re
 from YalexErrorChecker import YalexErrorChecker
+import textwrap
 
  # TODO para formateado: ver reglas de yalex para escape, EOF, espacios en blanco, etc.
 class YalexFormatter(object):
@@ -36,6 +37,7 @@ class YalexFormatter(object):
         # self.replace_quotation_mark()
         # self.build_regex()
         # self.build_tokens()
+        print(self.tokens)
         seen = set()  # conjunto para almacenar los elementos únicos
         unique = []   # lista para almacenar los elementos únicos en orden
         for item in self.errors:
@@ -50,7 +52,7 @@ class YalexFormatter(object):
         double_quotation = 0
         for element in self.file_content:
             if element == '"' and single_quotation % 2 == 0:
-                acu += " ' "
+                acu += ' " '
                 double_quotation += 1
             elif element == "'" and double_quotation % 2 == 0:
                 acu += " ' "
@@ -88,7 +90,6 @@ class YalexFormatter(object):
         
         # for line in content:
         #     line = line.strip()
-        #     print(line, '-----------------')
         #     if line:
         #         if re.match(self.simple_regex_pattern, line.strip()):
         #             self.add_common_regex(line.strip())
@@ -117,12 +118,15 @@ class YalexFormatter(object):
         tokens = []
         action = ''
         quotes = 0
+        double = 0
         for element in expression:
-            if element == "'":
+            if element == "'" and double % 2 == 0:
                 quotes += 1
+            if element == '"' and quotes % 2 == 0:
+                double += 1
             if element == '{':
                 inside_code = True
-            elif element == '}' and quotes % 2 == 0:
+            elif element == '}' and quotes % 2 == 0 and double % 2 == 0:
                 inside_code = False
                 tokens.append(acu.strip())
                 tokens.append(action)
@@ -133,6 +137,7 @@ class YalexFormatter(object):
             else:
                 acu += element
         return tokens
+    
     
     def convert_regexes_to_tuples(self, expressions):
         new_list = []
@@ -146,6 +151,7 @@ class YalexFormatter(object):
                 first_part = self.space_operators(first_part)
                 first_part = self.common_regex(first_part.split(" "))
             second_part = splitted[1]
+            second_part = textwrap.dedent(second_part)
             # second_part = second_part.replace('\t', '')
             second_part = second_part.replace('{' , '')
             second_part = second_part.replace('}', '')
@@ -170,7 +176,7 @@ class YalexFormatter(object):
         new_list = []
         for element in expressions:
             expression = element[0]
-            if "'" in expression:
+            if "'" == expression[0]:
                 element[0] = self.add_meta_character_string(expression)
             new_list.append(element)
         return new_list
@@ -182,24 +188,23 @@ class YalexFormatter(object):
         double_quotes = 0
         for character in content:
             acu += character
-            if character == "'":
+            if character == "'" and double_quotes % 2 == 0:
                 single_quotes += 1
-            if character == '"':
+            if character == '"' and single_quotes % 2 == 0:
                 double_quotes += 1 
-            if character == '}' and single_quotes % 2 == 0:
+            if character == '}' and (single_quotes % 2 == 0 and double_quotes % 2 == 0):
                 acu = acu.strip()
                 if acu[0] == '|':
                     acu = acu[1:]
                 tokens.append(acu.strip())
                 acu = ''
-                action = ''
         return tokens
 
     def build_tokens(self):
         content = self.file_content.split("rule" + self.token_name + "=")
         content = self.trim_quotation_marks(content[1])
         content = self.split_token_lines(content)
-        content = self.replace_delimiters(content)
+        # content = self.replace_delimiters(content)
         content = self.convert_regexes_to_tuples(content)
         content = self.add_meta_character_token(content)
         content = self.replace_existing_regex(content)
@@ -217,27 +222,66 @@ class YalexFormatter(object):
         pass
 
     def trim_quotation_marks(self, line):
-        matches = re.findall(r"'([^']+)'", line)
-        for element in matches:
-            text = element
-            replacement = text
-            if not self.check_is_blank(text):
-                replacement = text.strip()
+        stack_single = []
+        stack_double = []
+        double = 0
+        single = 0
+        acu = ''
+        res = ''
+
+        for element in line:
+            if element == "'" and double % 2 == 0:
+                single += 1
+                if stack_single:
+                    stack_single.pop()
+                    if not self.check_is_blank(acu):
+                        acu = '\\"' if acu.strip() == '"' else acu
+                        res += "'" + acu.strip() + "'"
+                    else:
+                        res += "'ε'"
+                    acu = ''
+                else:
+                    stack_single.append("'")
+            elif element == '"' and single % 2 == 0:
+                double += 1
+                if stack_double:
+                    stack_double.pop()
+                    if not self.check_is_blank(acu):
+                        acu = "\\'" if acu.strip() == "'" else acu
+                        res += '"' + acu.strip() + '"'
+                    else:
+                        res += '"ε"'
+                    acu = ''
+                else:
+                    stack_double.append('"')
+            elif stack_double or stack_single:
+                acu += element
             else:
-                replacement = re.sub(r'\s+', 'ε', text)
-            line = line.replace("'" + text + "'", "'" + replacement + "'")
-        return line
+                res += element
+        return res
+        # matches = re.findall(r"'([^']+)'", line)
+        # for element in matches:
+        #     text = element
+        #     replacement = text
+        #     if not self.check_is_blank(text):
+        #         replacement = text.strip()
+        #     else:
+        #         replacement = re.sub(r'\s+', 'ε', text)
+        #     line = line.replace("'" + text + "'", "'" + replacement + "'")
+        # return line
     
     def build_common_regex(self, line):
         body = ''
         for i in range(len(line)):
             element = line[i]
-            if "'" in element:
+            if "'" in element or '"' in element:
                 if 'space' == element:
                     body += ' '
                 else:
-                    # element = element.replace('"', '')
-                    element = element.replace("'", "")
+                    if "'" == element[0]:
+                        element = element.replace("'", "")
+                    elif '"' == element[0]:
+                        element = element.replace('"', "")
                     element = element.replace('+', '\+')
                     element = element.replace('.', '\.')
                     element = element.replace('*', '\*')
@@ -282,13 +326,17 @@ class YalexFormatter(object):
     
     def space_operators(self, line):
         operators = '*+|?()'
-        cont = 0
+        single = 0
         result = ""
+        double = 0
         for element in line:
-            if element == "'" or element == '"':
-                cont += 1
+            if element == "'" and double % 2 == 0:
+                single += 1
+            
+            if element == '"' and single % 2 == 0:
+                double += 1
             if element in operators:
-                if cont % 2 == 0:
+                if single % 2 == 0 and double % 2 == 0:
                     result += ' ' + element + ' '
                 else:
                     result += element
@@ -444,7 +492,6 @@ class YalexFormatter(object):
 
 
     def build_trailer(self):
-    
         if self.check_trailer():
             codigo_bloque = self.file_content.split("tokens =")[-1].split("{\n")[-1].split("}")[0]
             self.trailer_result = codigo_bloque
@@ -456,7 +503,7 @@ class YalexFormatter(object):
     def check_trailer(self):
         content = self.file_content.split("rule" + self.token_name + "=")[1]
         i = 0
-        acu = "rule" + self.token_name + "="
+        acu = ''
         is_rule = False
         quotes = 0
         rules = True
@@ -468,7 +515,6 @@ class YalexFormatter(object):
                 if element == '"' or element == "'":
                     quotes += 1
                 if i == 0:
-                    acu += element
                     is_rule = True
                     i += 1
                 else:

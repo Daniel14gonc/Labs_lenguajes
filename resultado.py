@@ -1,4 +1,3 @@
-clavos = 'abc'
 
 class Reader(object):
 
@@ -1220,8 +1219,8 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
-regexes = ['( |\t|\n)+','(0|1|2|3|4|5|6|7|8|9)+','(0|1|2|3|4|5|6|7|8|9)+(\.(0|1|2|3|4|5|6|7|8|9)+)','\+','\*','\(','\)','-','/','=','eof','if','then','else','while','for','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','"(0|1|2|3|4|5|6|7|8|9)+']
-actions_tokens = [(0, 'print(clavos)'), (1, "print( 'INTEGER' )"), (2, "print( 'FLOAT' )"), (3, "print( 'PLUS' )"), (4, "print( 'POR' )"), (5, "print( 'LPAREN' )"), (6, "print( 'RPAREN' )"), (7, "print( 'MINUS' )"), (8, "print( 'DIV' )"), (9, "print( 'EQUALS' )"), (10, "print( 'EOF' )"), (11, "print( 'IF' )"), (12, "print( 'THEN' )"), (13, "print( 'ELSE' )"), (14, "print( 'WHILE' )"), (15, "print( 'FOR' )"), (16, "print( 'IDENTIFICADOR' )"), (17, "print( 'HEX' )")]
+regexes = ['( |\t|\n)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|0x(0|1|2|3|4|5|6|7|8|9)+)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)(0x(0|1|2|3|4|5|6|7|8|9)+)+','-?(0|1|2|3|4|5|6|7|8|9)+','\+','\*','=','-?(0|1|2|3|4|5|6|7|8|9)+\.-?(0|1|2|3|4|5|6|7|8|9)+']
+actions_tokens = [(0, 'pass'), (1, "print( 'Identificador' )"), (2, "print( 'Identificador2' )"), (3, "print( 'Número' )"), (4, "print( 'Operador de suma' )"), (5, "print( 'Operador de multiplicación' )"), (6, "print( 'Operador de asignación' )"), (7, "print( 'Float' )")]
 
 count = 1
 NFAs = []
@@ -1307,5 +1306,4 @@ if errors:
 
 output_tokens(tokens)
 
-import re
 

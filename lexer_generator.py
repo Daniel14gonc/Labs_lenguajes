@@ -1,13 +1,13 @@
 from LexerDirector import LexerDirector
 import sys
 
-args = sys.argv
+path = input('Ingrese el nombre del archivo.yal\n> ')
+file = input ('Ingrese el nombre del archivo compilado\n> ')
 
-path = None
-file = None
-if len(args) > 2: 
-    path = args[1]
-    file = args[2]
+if ".py" not in file:
+    file += ".py"
+if ".yal" not in path:
+    path += ".yal"
 
-director = LexerDirector(path, file)
+director = LexerDirector(path = path, file = file)
 director.construct_lexer()

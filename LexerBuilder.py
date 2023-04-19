@@ -156,7 +156,7 @@ class LexerBuilder(object):
                 accepted = tokenizer.is_accepted()
                 has_transitions = tokenizer.has_transitions()
                 longest_lexeme = not (accepted or has_transitions)
-                if not (longest_lexeme and latest_token):
+                if not (longest_lexeme and latest_token != None):
                     latest_token = tokenizer.get_token()
                     advance += 1
                     line_pos += 1
@@ -164,7 +164,7 @@ class LexerBuilder(object):
                         line += 1
                         line_pos = -1
 
-            if latest_token:
+            if latest_token != None:
                 tokens.append(latest_token)
             else:
                 errors.append(f"Lexical error on line {line} at position {line_pos}.\\n")
