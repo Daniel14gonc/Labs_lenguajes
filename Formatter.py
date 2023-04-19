@@ -38,7 +38,6 @@ class YalexFormatter(object):
         # self.build_tokens()
         seen = set()  # conjunto para almacenar los elementos únicos
         unique = []   # lista para almacenar los elementos únicos en orden
-
         for item in self.errors:
             if item not in seen:
                 seen.add(item)
@@ -46,8 +45,19 @@ class YalexFormatter(object):
         return set(unique)
 
     def replace_quotation_mark(self):
-        self.file_content = self.file_content.replace('"', " ' ")
-        self.file_content = self.file_content.replace("'", " ' ")
+        acu = ''
+        single_quotation = 0
+        double_quotation = 0
+        for element in self.file_content:
+            if element == '"' and single_quotation % 2 == 0:
+                acu += " ' "
+                double_quotation += 1
+            elif element == "'" and double_quotation % 2 == 0:
+                acu += " ' "
+                single_quotation += 1
+            else:
+                acu += element
+        self.file_content = acu
         
 
     def clean_comments(self):
@@ -57,12 +67,31 @@ class YalexFormatter(object):
     def build_regex(self):
         patron = re.compile(r'\{.*?\}', re.DOTALL)
         content =  re.sub(patron, '', self.file_content)
-        content = content.split("\n")
-        for line in content:
-            line = line.strip()
-            if line:
-                if re.match(self.simple_regex_pattern, line.strip()):
-                    self.add_common_regex(line.strip())
+        content = content.split('rule')[0].strip()
+        acu = ''
+        i = 0
+        for element in content:
+            if element != '\n':
+                acu += element
+            if len(acu) > 3:
+                temp = acu[len(acu) - 4:]
+                if temp == 'let ' or temp == 'let=' or i + 1 == len(content):
+                    if i + 1 == len(content):
+                        regex = acu
+                    else:
+                        regex = acu[:-4]
+                    acu = 'let '
+                    if re.match(self.simple_regex_pattern, regex):
+                        self.add_common_regex(regex.strip())
+            i += 1
+        # content = content.split("\n")
+        
+        # for line in content:
+        #     line = line.strip()
+        #     print(line, '-----------------')
+        #     if line:
+        #         if re.match(self.simple_regex_pattern, line.strip()):
+        #             self.add_common_regex(line.strip())
 
     def replace_delimiters(self, expression):
         new_list = []
@@ -87,10 +116,13 @@ class YalexFormatter(object):
         inside_code = False
         tokens = []
         action = ''
+        quotes = 0
         for element in expression:
+            if element == "'":
+                quotes += 1
             if element == '{':
                 inside_code = True
-            elif element == '}':
+            elif element == '}' and quotes % 2 == 0:
                 inside_code = False
                 tokens.append(acu.strip())
                 tokens.append(action)
@@ -138,7 +170,7 @@ class YalexFormatter(object):
         new_list = []
         for element in expressions:
             expression = element[0]
-            if "'" in expression or '"' in expression:
+            if "'" in expression:
                 element[0] = self.add_meta_character_string(expression)
             new_list.append(element)
         return new_list
@@ -146,9 +178,15 @@ class YalexFormatter(object):
     def split_token_lines(self, content):
         acu = ''
         tokens = []
+        single_quotes = 0
+        double_quotes = 0
         for character in content:
             acu += character
-            if character == '}':
+            if character == "'":
+                single_quotes += 1
+            if character == '"':
+                double_quotes += 1 
+            if character == '}' and single_quotes % 2 == 0:
                 acu = acu.strip()
                 if acu[0] == '|':
                     acu = acu[1:]
@@ -158,7 +196,7 @@ class YalexFormatter(object):
         return tokens
 
     def build_tokens(self):
-        content = self.file_content.split('rule tokens =')
+        content = self.file_content.split("rule" + self.token_name + "=")
         content = self.trim_quotation_marks(content[1])
         content = self.split_token_lines(content)
         content = self.replace_delimiters(content)
@@ -194,11 +232,11 @@ class YalexFormatter(object):
         body = ''
         for i in range(len(line)):
             element = line[i]
-            if "'" in element or '"' in element:
+            if "'" in element:
                 if 'space' == element:
                     body += ' '
                 else:
-                    element = element.replace('"', '')
+                    # element = element.replace('"', '')
                     element = element.replace("'", "")
                     element = element.replace('+', '\+')
                     element = element.replace('.', '\.')
@@ -417,17 +455,33 @@ class YalexFormatter(object):
 
     def check_trailer(self):
         content = self.file_content.split("rule" + self.token_name + "=")[1]
-        content = content.splitlines()
         i = 0
-        for element in content:
-            if element and element != '\t' and not self.check_is_blank(element):
-                if i != 0:
-                    if '{' in element and '|' not in element:
-                        return True
-                else:    
+        acu = "rule" + self.token_name + "="
+        is_rule = False
+        quotes = 0
+        rules = True
+        j = 0
+        while j < len(content) and rules:
+            element = content[j]
+            acu += element
+            if element and not self.check_is_blank(element):
+                if element == '"' or element == "'":
+                    quotes += 1
+                if i == 0:
+                    acu += element
+                    is_rule = True
                     i += 1
-                         
-        return False
+                else:
+                    if element == '|':
+                        is_rule = True
+                    if element == '}' and is_rule and quotes % 2 == 0:
+                        is_rule = False
+                    if element == '{' and not is_rule:
+                        acu = acu[:-1]
+                        rules = False   
+            j += 1 
+        content = content.replace(acu, '')
+        return '{' in content
 
     def get_header(self):
         return self.header_result

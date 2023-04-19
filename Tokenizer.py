@@ -109,11 +109,11 @@ class Tokenizer(NFA):
                 if state in key:
                     tokens.append(self.actions[key])
 
-        max = -1
+        min = float('inf')
         max_token = None
         for token in tokens:
-            if token[0] > max:
-                max = token[0]
+            if token[0] < min:
+                min = token[0]
                 max_token = token[1]
         
         return max_token

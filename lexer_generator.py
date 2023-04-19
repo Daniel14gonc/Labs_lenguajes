@@ -4,8 +4,10 @@ import sys
 args = sys.argv
 
 path = None
-if len(args) > 1: 
+file = None
+if len(args) > 2: 
     path = args[1]
+    file = args[2]
 
-director = LexerDirector(path)
+director = LexerDirector(path, file)
 director.construct_lexer()

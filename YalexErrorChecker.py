@@ -100,14 +100,16 @@ class YalexErrorChecker(object):
     def check_unbalanced_quotation_marks(self):
         single_marks = 0
         double_marks = 0
-        content = self.file_content.split("\n")
-        i = 1
-        for line in content:
-            for element in line:
-                if element == "'":
+        content = self.file_content
+        for element in content:
+            if element == "'":
+                if double_marks % 2 == 0:
                     single_marks += 1
-                if element == '"':
+            if element == '"':
+                if single_marks % 2 == 0:
                     double_marks += 1
+                
+                
         if single_marks % 2 != 0:
             self.errors.append("Error: unbalanced simple quotation marks.\n")
         if double_marks % 2 != 0:
@@ -120,11 +122,31 @@ class YalexErrorChecker(object):
 
     def check_common_regex(self):
         content = self.clean_comments(self.file_content)
-        content = content.split("\n")
-        i = 1
-        for line in content:
-            if 'let' in line and not re.match(self.simple_regex_pattern, line.strip()):
-                self.errors.append(f"Error: Invalid declaration of common regex at line {i}.\n")
+        patron = re.compile(r'\{.*?\}', re.DOTALL)
+        content =  re.sub(patron, '', content)
+        content = content.split('rule')[0].strip()
+        acu = ''
+        i = 0
+        j = 0
+        k = 1
+        for element in content:
+            if element != '\n':
+                acu += element
+            if len(acu) > 3:
+                temp = acu[len(acu) - 4:]
+                if temp == 'let ' or temp == 'let=' or i + 1 == len(content):
+                    if i + 1 == len(content):
+                        regex = acu
+                    else:
+                        regex = acu[:-4]
+                    if j == 0:
+                        j = 1
+                    else: 
+                        acu = 'let '
+                        if not re.match(self.simple_regex_pattern, regex):
+                            self.errors.append(f"Error: Invalid declaration of common regex at regex {k}.\n")
+                        
+                        k += 1
             i += 1
 
     def check_white_spaces(self, string):
@@ -161,14 +183,19 @@ class YalexErrorChecker(object):
             i = 1
             initial = True
             acu = ''
+            quotes = 0
             for element in tokens_body[1]:
                 acu += element
-                if element == '}':
+                if element == '"' or element == "'":
+                    quotes += 1
+                if element == '}' and quotes % 2 == 0:
                     if not initial:
                         if not re.match(self.token_regex, acu.strip()):
+                            print(acu.strip())
                             self.errors.append(f"Error in token declaration number: {i}")
                     else:
                         if not re.match(self.initial_token_regex, acu.strip()):
+                            print(acu.strip())
                             self.errors.append(f"Error in token declaration number: {i}")
                     initial = False
                     acu = ''

@@ -7,8 +7,9 @@ from Tokenizer import Tokenizer
 import textwrap
 
 class LexerBuilder(object):
-    def __init__(self, path) -> None:
+    def __init__(self, path, file) -> None:
         self.path = path
+        self.file = file
         self.file_content = []
         self.regexes = []
     
@@ -185,13 +186,15 @@ class LexerBuilder(object):
 
     def write_to_file(self):
 
-        with open("resultado.py", "wt") as file:
+        with open(self.file, "wt") as file:
             file.write(self.header + '\n')
             for content in self.file_content:
                 file.write(content + '\n')
             for function in self.functionality:
                 file.write(function.replace('\t', '') + '\n')
             file.write(self.trailer + '\n')
+        
+        print("Archivo generado: ", f"{self.file}")
             
     
     # TODO: Arreglar para poder almacenar que tokens van segun estado de aceptacion.

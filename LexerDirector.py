@@ -1,9 +1,10 @@
 from LexerBuilder import LexerBuilder
 
 class LexerDirector(object):
-    def __init__(self, path = None) -> None:
+    def __init__(self, path = None, file = None) -> None:
         self.path = path if path else 'lexer.yal'
-        self.builder = LexerBuilder(self.path)
+        self.file = file if file else 'resultado.py'
+        self.builder = LexerBuilder(self.path, self.file)
 
     def construct_lexer(self):
         self.builder.read_lexer_file()
