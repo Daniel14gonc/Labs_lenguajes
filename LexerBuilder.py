@@ -127,6 +127,7 @@ class LexerBuilder(object):
 
         text = """
         import sys
+        from termcolor import colored
 
         args = sys.argv
 
@@ -150,6 +151,7 @@ class LexerBuilder(object):
             tokenizer.begin_simulation()
             longest_lexeme = False
             latest_token = None
+            acu = ""
             while not longest_lexeme and advance < len(source):
                 symbol = source[advance]
                 tokenizer.simulate_symbol(symbol)
@@ -157,6 +159,7 @@ class LexerBuilder(object):
                 has_transitions = tokenizer.has_transitions()
                 longest_lexeme = not (accepted or has_transitions)
                 if not (longest_lexeme and latest_token != None):
+                    acu += symbol
                     latest_token = tokenizer.get_token()
                     advance += 1
                     line_pos += 1
@@ -167,7 +170,7 @@ class LexerBuilder(object):
             if latest_token != None:
                 tokens.append(latest_token)
             else:
-                errors.append(f"Lexical error on line {line} at position {line_pos}.\\n")
+                errors.append(f"Lexical error on line {line} at position {line_pos}, element {colored(acu, 'green')}\\n")
             initial = advance
 
         if errors:
