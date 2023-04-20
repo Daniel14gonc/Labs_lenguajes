@@ -34,12 +34,12 @@ class YalexErrorChecker(object):
                     if not is_inside_marks:
                         if j + 1 < len(line) and line[j + 1] != '*':
                             stack.append(element)
-                elif element == ')' and line[j - 1] != '*':
+                elif element == ')':
                     if not is_inside_marks:
                         if stack:
                             stack.pop()
-                        else:
-                            self.errors.append(f"Error at line {i}: parenthesis mismatch.\n")
+                        # else:
+                        #     self.errors.append(f"Error at line {i}: parenthesis mismatch.\n")
                 j += 1
             i += 1
         if stack:
@@ -64,8 +64,8 @@ class YalexErrorChecker(object):
                     elif element == ')' and line[j - 1] == '*':
                         if stack:
                             stack.pop()
-                        else:
-                            self.errors.append(f"Error at line {i}: comment not closed.\n")
+                        # else:
+                        #     self.errors.append(f"Error at line {i}: comment not closed.\n")
                 j += 1
             i += 1
         if stack:

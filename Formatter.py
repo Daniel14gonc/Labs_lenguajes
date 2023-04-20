@@ -83,7 +83,8 @@ class YalexFormatter(object):
                         regex = acu[:-4]
                     acu = 'let '
                     if re.match(self.simple_regex_pattern, regex):
-                        self.add_common_regex(regex.strip())
+                        regex = regex if self.check_is_blank(regex) else regex.strip()
+                        self.add_common_regex(regex)
             i += 1
         # content = content.split("\n")
         
@@ -154,7 +155,7 @@ class YalexFormatter(object):
             # second_part = second_part.replace('\t', '')
             second_part = second_part.replace('{' , '')
             second_part = second_part.replace('}', '')
-            second_part = second_part.strip()
+            second_part = second_part.strip() if not self.check_is_blank(second_part) else second_part
             element = [first_part, second_part]
             new_list.append(element)
         return new_list
@@ -312,7 +313,8 @@ class YalexFormatter(object):
     def common_regex(self, line):
         body = self.build_common_regex(line)
         body = self.replace_common_patterns(body)
-        body = body.strip()
+        body = body.replace(' ', 'ε')
+        body = body.strip() if not self.check_is_blank(body) else body
         body = body.replace('ε', ' ')
         return body
     

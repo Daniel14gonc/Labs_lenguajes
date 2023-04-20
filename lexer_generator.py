@@ -8,6 +8,7 @@ if ".py" not in file:
     file += ".py"
 if ".yal" not in path:
     path += ".yal"
-
+# path = "ej5.yal"
+# file = "ej5.py"
 director = LexerDirector(path = path, file = file)
 director.construct_lexer()

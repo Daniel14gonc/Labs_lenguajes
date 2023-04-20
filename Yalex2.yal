@@ -1,0 +1,17 @@
+let letra = ['a'-'z''A'-'Z']
+let digito = ['0'-'9']
+let delimitador = [' ''\t''\n']
+let identificador = letra(letra|digito)*
+let integer = digito+
+
+rule tokens =
+        "if"            {print('IF')}
+    |   "for"           {print('FOR')}
+    |   "while"           {print('WHILE')}
+    |   identificador  {print('ID')}
+    |   integer         {print('INTEGER')}
+    |   delimitador+      {}
+    |   '+'          {print("PLUS")}
+    |   '-'          {print("MINUS")}
+    |   '*'          {print("TIMES")}
+    |   '/'          {print("DIVIDE")}
