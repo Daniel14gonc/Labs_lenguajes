@@ -1219,8 +1219,8 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
-regexes = ['if','for','((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*)*xyz','(0|1|2|3|4|5|6|7|8|9)+','(0|1|2|3|4|5|6|7|8|9)+\.(0|1|2|3|4|5|6|7|8|9)+','\"((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9)|( |\t|\n))+\"','( |\t|\n)+']
-actions_tokens = [(0, "print( 'IF' )"), (1, "print( 'FOR' )"), (2, "print( 'ID' )"), (3, "print( 'INTEGER' )"), (4, "print( 'FLOAT' )"), (5, "print( 'STRING' )"), (6, '')]
+regexes = ['if','for','(0|1|2|3|4|5|6|7|8|9)+\.(0|1|2|3|4|5|6|7|8|9)+','(0|1|2|3|4|5|6|7|8|9)+','((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*)*xyz','\"((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9)|( |\t|\n))+\"','( |\t|\n)+']
+actions_tokens = [(0, "print( 'IF' )"), (1, "print( 'FOR' )"), (2, "print( 'FLOAT' )"), (3, "print( 'INTEGER' )"), (4, "print( 'ID' )"), (5, "print( 'STRING' )"), (6, '')]
 
 count = 1
 NFAs = []
@@ -1269,7 +1269,7 @@ source = evaluate_file(path)
 initial = 0
 advance = 0
 latest_token = None
-line = 0
+line = 1
 line_pos = -1
 errors = []
 tokens = []
@@ -1280,33 +1280,46 @@ while initial < len(source):
     longest_lexeme = False
     latest_token = None
     acu = ""
-    while not longest_lexeme and advance < len(source):
+    count = 0
+    has_transitions = True
+    count = -1
+    line_count = 0
+    while has_transitions and advance < len(source):
         symbol = source[advance]
         tokenizer.simulate_symbol(symbol)
         accepted = tokenizer.is_accepted()
         has_transitions = tokenizer.has_transitions()
-        longest_lexeme = not (accepted or has_transitions)
-        if not (longest_lexeme and latest_token != None):
-            acu += symbol
+        longest_lexeme = accepted
+        if longest_lexeme:
             latest_token = tokenizer.get_token()
-            advance += 1
-            line_pos += 1
+            count = 0
+            line_pos_count = 0
+            line_count = 0
+        else:
+            acu += symbol
+            count += 1
             if symbol == '\n':
+                line_count += 1
+
+        advance += 1
+        line_pos += 1
+        if symbol == '\n':
+            if line_count == 0:
                 line += 1
                 line_pos = -1
 
+    line_pos = line_pos - count
     if latest_token != None:
         tokens.append(latest_token)
     else:
         errors.append(f"Lexical error on line {line} at position {line_pos}, element {colored(acu, 'green')}\n")
-    initial = advance
+    initial = advance - count
 
 if errors:
     error_output = "\nLexical errors:\n"
     for error in errors:
         error_output += error
     raise Exception(error_output)
-
 output_tokens(tokens)
 
 
