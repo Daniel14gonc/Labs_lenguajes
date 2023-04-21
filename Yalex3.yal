@@ -1,15 +1,15 @@
 let space = ' '
 let delimitador = [' ''\t''\n']
-let letra = ['a'-'z''A'-'Z']
+let letra = ['a'-'z' 'A'-'Z']
 let digito = ['0'-'9']
 let identificador = (letra(letra|digito)*)*'xyz'
 let integer = digito+
 let float = digito+"."digito+
-let strings = '"'(letra|digito|delimitador)+"'"
+let strings = '"'(letra|digito|delimitador)+'"'
 
 
 rule tokens =
-        "if"            {print(IF')}
+        "if"            {print('IF')}
     |   "for"           {print('FOR')}
     |   identificador  {print('ID')}
     |   integer         {print('INTEGER')}

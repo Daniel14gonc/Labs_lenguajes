@@ -3,7 +3,6 @@ let integer = digito+
 let delimitador = [' ''\t''\n']
 let float = digito+"."digito+
 let HEX = "0x"(digito|['a'-'f''A'-'F'])+
-let horrocurux = ['1'-'9']
 
 rules tokens =
         integer      {print('INTEGER')}

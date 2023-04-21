@@ -1219,8 +1219,8 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
-regexes = ['if','for','((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*)*xyz','(0|1|2|3|4|5|6|7|8|9)+','(0|1|2|3|4|5|6|7|8|9)+\.(0|1|2|3|4|5|6|7|8|9)+','\"((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9)|( |\t|\n))+\"','( |\t|\n)+']
-actions_tokens = [(0, "print( 'IF' )"), (1, "print( 'FOR' )"), (2, "print( 'ID' )"), (3, "print( 'INTEGER' )"), (4, "print( 'FLOAT' )"), (5, "print( 'STRING' )"), (6, '')]
+regexes = ['if','for','while','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','(0|1|2|3|4|5|6|7|8|9)+','( |\t|\n)+','\+','-','\*','/']
+actions_tokens = [(0, "print( 'IF' )"), (1, "print( 'FOR' )"), (2, "print( 'WHILE' )"), (3, "print( 'ID' )"), (4, "print( 'INTEGER' )"), (5, ''), (6, 'print( "PLUS" )'), (7, 'print( "MINUS" )'), (8, 'print( "TIMES" )'), (9, 'print( "DIVIDE" )')]
 
 count = 1
 NFAs = []
