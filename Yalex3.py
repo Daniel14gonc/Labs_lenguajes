@@ -1284,6 +1284,7 @@ while initial < len(source):
     has_transitions = True
     count = -1
     line_count = 0
+    latest_pos = initial
     while has_transitions and advance < len(source):
         symbol = source[advance]
         tokenizer.simulate_symbol(symbol)
@@ -1295,6 +1296,7 @@ while initial < len(source):
             count = 0
             line_pos_count = 0
             line_count = 0
+            latest_pos = advance + 1
         else:
             acu += symbol
             count += 1
@@ -1312,8 +1314,9 @@ while initial < len(source):
     if latest_token != None:
         tokens.append(latest_token)
     else:
+        latest_pos = advance
         errors.append(f"Lexical error on line {line} at position {line_pos}, element {colored(acu, 'green')}\n")
-    initial = advance - count
+    initial = latest_pos
 
 if errors:
     error_output = "\nLexical errors:\n"

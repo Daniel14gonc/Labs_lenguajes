@@ -156,6 +156,7 @@ class LexerBuilder(object):
             has_transitions = True
             count = -1
             line_count = 0
+            latest_pos = initial
             while has_transitions and advance < len(source):
                 symbol = source[advance]
                 tokenizer.simulate_symbol(symbol)
@@ -167,12 +168,13 @@ class LexerBuilder(object):
                     count = 0
                     line_pos_count = 0
                     line_count = 0
+                    latest_pos = advance + 1
                 else:
                     acu += symbol
                     count += 1
                     if symbol == '\\n':
                         line_count += 1
-                
+
                 advance += 1
                 line_pos += 1
                 if symbol == '\\n':
@@ -184,8 +186,9 @@ class LexerBuilder(object):
             if latest_token != None:
                 tokens.append(latest_token)
             else:
+                latest_pos = advance
                 errors.append(f"Lexical error on line {line} at position {line_pos}, element {colored(acu, 'green')}\\n")
-            initial = advance - count
+            initial = latest_pos
 
         if errors:
             error_output = "\\nLexical errors:\\n"
