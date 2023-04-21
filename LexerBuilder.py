@@ -49,25 +49,27 @@ class LexerBuilder(object):
             action = element[1]
             self.actions_tokens.append(action)
             self.regexes.append(regex)
-            # try:
-            regex = Regex(regex)
-            dfa = DFA(regex, self.count)
-            dfa.minimize()
-            self.count = dfa.count
-            self.NFAs.append(dfa)
-            final_states = dfa.acceptance_states
-            final_states = frozenset(final_states)
-            self.actions.append((priority, str(action)))
-            # except Exception as e:
-            #     self.regex_errors.add(e)
+            try:
+                regex = Regex(regex)
+                dfa = DFA(regex, self.count)
+                dfa.minimize()
+                self.count = dfa.count
+                self.NFAs.append(dfa)
+                final_states = dfa.acceptance_states
+                final_states = frozenset(final_states)
+                self.actions.append((priority, str(action)))
+            except Exception as e:
+                self.regex_errors.add(e)
             priority += 1
 
     def concat_files_needed(self):
         files = ["Reader", "Node", "AST", "FAErrorChecker", "STNode", "ST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "DFA", "NFA", "Tokenizer"]
-        imports = ["from regex import Regex", "from Node import Node", "from AST import AST", 
+        imports = ["from regex import Regex", "from Node import Node", "from AST import AST", "from ST import ST",
                    "from RegexErrorChecker import RegexErrorChecker", "from AFVisual import AFVisual", 
                    "from FA import FA", "from DFA import DFA",
-                   "from AST import AST", "from STNode import STNode", "from FAErrorChecker import FAErrorChecker"]
+                   "from AST import AST", "from STNode import STNode", "from FAErrorChecker import FAErrorChecker",
+                   "from NFA import NFA"]
+        
         for file in files:
             with open(file + ".py", "rt") as archivo:
                 contenido = archivo.read()
@@ -208,6 +210,9 @@ class LexerBuilder(object):
         with open(self.file, "wt") as file:
             file.write(self.header + '\n')
             for content in self.file_content:
+                # for element in imports:
+                #     print("from RegexErrorChecker import RegexErrorChecker" in content)
+                #     content = content.replace(element, '')
                 file.write(content + '\n')
             for function in self.functionality:
                 file.write(function.replace('\t', '') + '\n')

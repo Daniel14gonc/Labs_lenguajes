@@ -665,7 +665,7 @@ class FA(object):
         df = pd.DataFrame.from_dict(self.transitions, orient = 'index', columns=self.alphabet)
         dfi.export(df, 'tables/' + path + '.png')
 
-from ST import ST
+
 
 
 class DFA(FA):
@@ -1083,7 +1083,7 @@ class NFA(FA):
             return True
         return False 
 
-from NFA import NFA
+
 
 import pandas as pd
 import re
