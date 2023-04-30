@@ -532,9 +532,22 @@ class YalexFormatter(object):
 
     def get_header(self):
         return self.header_result
-
-    def get_regex(self):
-        pass
-
+    
     def get_trailer(self):
         return self.trailer_result
+
+    def get_token_names(self):
+        tokens = []
+        for element in self.tokens:
+            name = element[1]
+            if name and not self.check_is_blank(name):
+                name = name.replace('return', '')
+                name = name.strip()
+                if name[0] == "'":
+                    name = name.replace("'", '')
+                if name[0] == "'":
+                    name = name.replace("'", '')
+                tokens.append(name)
+        return tokens
+
+   

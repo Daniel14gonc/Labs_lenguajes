@@ -18,11 +18,11 @@ class LexerBuilder(object):
         self.yalex_content = self.reader.read()
     
     def get_tokens_from_yalex(self):
-        formatter = YalexFormatter()
-        self.yalex_errors = formatter.format_yalex_content(self.yalex_content)
-        self.tokens = formatter.tokens
-        self.header = textwrap.dedent(formatter.get_header())
-        self.trailer = textwrap.dedent(formatter.get_trailer())
+        self.self.formatter = YalexFormatter()
+        self.yalex_errors = self.formatter.format_yalex_content(self.yalex_content)
+        self.tokens = self.formatter.tokens
+        self.header = textwrap.dedent(self.formatter.get_header())
+        self.trailer = textwrap.dedent(self.formatter.get_trailer())
 
     def errors_exception(self):
         errors = ""
