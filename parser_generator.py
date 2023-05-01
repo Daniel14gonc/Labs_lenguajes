@@ -12,7 +12,7 @@ import sys
 # if ".yal" not in yalex:
 #     yalex += ".yal"
 
-yapar = './yapar/slr-1.yalp'
-yalex = './yalex/slr-1.yal'
+yapar = './yapar/slr-2.yalp'
+yalex = './yalex/slr-2.yal'
 director = ParserDirector(yapar = yapar, yalex = yalex)
 director.construct_parser()

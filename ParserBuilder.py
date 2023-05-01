@@ -58,6 +58,7 @@ class ParserBuilder(object):
         grammar.augument()
         automaton = LRAutomaton(grammar)
         automaton.build()
+        automaton.visualize()
 
     
     def split_file_content(self):

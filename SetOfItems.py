@@ -5,6 +5,7 @@ class SetOfItems(object):
         self.productions = set()
         self.grammar = grammar
         self.transition_symbols = set()
+        self.number = 0
 
     def set_heart(self, productions):
         for production in productions:
@@ -59,16 +60,47 @@ class SetOfItems(object):
                 result.add((production, production_pos + 1))
         return result
     
-    def goto(self, symbol, I):
+    def goto(self, I, symbol):
         result = set()
         for element in I:
             result = self.add_production_goto(element, result, symbol)
 
         return result
+    
+    def add_dot(self, body, dot_pos):
+        acu = ""
+        for i in range(len(body)):
+            element = body[i]
+            if i == dot_pos:
+                acu += "•" + element + " "
+            else:
+                acu += element + " "
+        acu = acu[:-1]
+        if dot_pos == len(body):
+            acu += "•"
+        return acu
+    
+    def __repr__(self) -> str:
+        closure = self.closure()
+        body = closure - self.heart
+        res = "I" + str(self.number)
+        res += "\nHeart\n"
 
-    # TODO: revisar goto que no lo esta haciendo bien
-
-    '''
-        {frozenset({(expression' -> expression, -1)}): ['', '', frozenset({(expression' -> expression, 0), (expression -> expression PLUS term, 0)}), frozenset({(factor -> ID, 0)}), frozenset({(term -> factor, 0)}), frozenset({(expression -> term, 0), (term -> term TIMES factor, 0)}), '', frozenset({(factor -> LPAREN expression RPAREN, 0)})], frozenset({(expression' -> expression, 0), (expression -> expression PLUS term, 0)}): ['', '', '', '', '', '', '', ''], frozenset({(factor -> ID, 0)}): ['', '', '', '', '', '', '', ''], frozenset({(term -> factor, 0)}): ['', '', '', '', '', '', '', ''], frozenset({(expression -> term, 0), (term -> term TIMES factor, 0)}): ['', '', '', '', '', '', '', ''], frozenset({(factor -> LPAREN expression RPAREN, 0)}): ['', '', frozenset({(factor -> LPAREN expression RPAREN, 1), (expression -> expression PLUS term, 0)}), frozenset({(factor -> ID, 0)}), frozenset({(term -> factor, 0)}), frozenset({(expression -> term, 0), (term -> term TIMES factor, 0)}), '', ''], frozenset({(factor -> LPAREN expression RPAREN, 1), (expression -> expression PLUS term, 0)}): [frozenset({(expression -> expression PLUS term, 1)}), frozenset({(factor -> LPAREN expression RPAREN, 2)}), '', '', '', '', '', ''], frozenset({(expression -> expression PLUS term, 1)}): ['', '', '', '', '', '', '', ''], frozenset({(factor -> LPAREN expression RPAREN, 2)}): ['', '', '', '', '', '', '', '']}
-    '''
+        for item in list(self.heart):
+            production = item[0]
+            dot_pos = item[1] + 1
+            head, body_prod = production.get_attributes()
+            acu = head + " => " + self.add_dot(body_prod, dot_pos)
+            res += acu + '\n'
+        if len(body) > 0:
+            res += "\nBody\n"
+            for item in list(body):
+                production = item[0]
+                dot_pos = item[1] + 1
+                head, body_prod = production.get_attributes()
+                acu = head + " => " + self.add_dot(body_prod, dot_pos)
+                res += acu + '\n'
+        res = res[:-1]
+        
+        return res
         
