@@ -1,5 +1,7 @@
 from Formatter import YalexFormatter
 from Reader import Reader
+from Grammar import Grammar
+from LRAutomaton import LRAutomaton
 
 class ParserBuilder(object):
     
@@ -50,6 +52,13 @@ class ParserBuilder(object):
         self.split_file_content()
         self.create_tokens()
         self.create_productions()
+
+    def create_LR_automaton(self):
+        grammar = self.build_grammar()
+        grammar.augument()
+        automaton = LRAutomaton(grammar)
+        automaton.build()
+
     
     def split_file_content(self):
         splitted_content = self.yapar_content.split('%%')
@@ -103,7 +112,8 @@ class ParserBuilder(object):
 
     def create_productions(self):
         finished_production = False
-        self.productions = {}
+        self.productions = []
+        first_production = None
         acu = ''
         for element in self.production_content:
             if element != '\n':
@@ -115,12 +125,13 @@ class ParserBuilder(object):
                     body = acu[1].strip()
                     body = self.get_body(body)
                     for element in body:
-                        element = element.strip()
-                        if head not in self.productions:
-                            self.productions[head] = [element]
-                        else:
-                            self.productions[head].append(element)
+                        body_list = element.split(' ')
+                        body_list = [item.strip() for item in body_list if item != '']
+                        self.productions.append((head, body_list))
                     acu = ''
                 else:
                     acu += element 
                 finished_production = False
+    
+    def build_grammar(self):
+        return Grammar(self.productions)
