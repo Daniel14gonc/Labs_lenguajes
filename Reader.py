@@ -4,7 +4,7 @@ class Reader(object):
         self.path = path
     
     def read(self):
-        file = open(self.path, 'r')
+        file = open(self.path, 'r', encoding='utf-8')
         self.file_content = file.read()
         file.close()
         return self.file_content

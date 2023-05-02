@@ -23,7 +23,12 @@ class Grammar(object):
             head, body = production.get_attributes()
             self.grammar_symbols.add(head)
             for symbol in body:
-                self.grammar_symbols.add(symbol)
+                if symbol != 'ε':
+                    self.grammar_symbols.add(symbol)
+
+    def split_grammar_elements(self, tokens):
+        self.tokens = set(tokens)
+        self.non_terminals = self.grammar_symbols - self.tokens
 
     def augument(self):
         head, _ = self.first_production.get_attributes()
