@@ -10,13 +10,14 @@ class SetOfItems(object):
     def set_heart(self, productions):
         for production in productions:
             self.heart.add(production)
-
+    
+    # TODO: revisar añadir producciones visitadas
     def closure(self):
         productions = self.grammar.productions
         closure = {item for item in self.heart}
         self.stack = [item for item in self.heart]
-
-        productions_visited = {item[0] for item in self.heart}
+        
+        productions_visited = set()
 
         while self.stack:
             item = self.stack.pop()

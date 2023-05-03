@@ -35,6 +35,7 @@ class Grammar(object):
         new_head = head + "'"
         if new_head in self.heads:
             new_head = head + '@'
+        self.non_terminals.add(new_head)
         first_prod = Production(new_head, [head])
         self.productions.insert(0, first_prod)
         self.first_production = first_prod

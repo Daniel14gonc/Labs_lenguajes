@@ -31,6 +31,7 @@ class LRAutomaton(object):
     def get_symbol_index(self, symbol):
         return self.grammar_symbols.index(symbol)
 
+    # TODO: tengo que tener un diccionario con los indices asociados a los items para luego usar en la pila (ejemplo de Carlos).
     def build(self):
         items = SetOfItems(self.grammar)
         first_production = self.grammar.first_production
