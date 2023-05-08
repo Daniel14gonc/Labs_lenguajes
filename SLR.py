@@ -38,6 +38,7 @@ class SLR(object):
         self.grammar.augument()
         self.automaton = LRAutomaton(self.grammar)
         self.automaton.build()
+        self.transitions = self.automaton.transitions
         self.automaton.visualize()
 
     def add_first_symbol(self, X, symbol):
@@ -70,7 +71,6 @@ class SLR(object):
     def add_first_set(self, X, other_first):
         self.first_set[X] = self.first_set[X].union(other_first)
 
-    # TODO: Pensar en donde ponerlo para que se enloope xd
     def first(self, X):
         if X not in self.first_set:
             self.first_set[X] = set()
@@ -144,5 +144,32 @@ class SLR(object):
                         self.follow_set[element] = self.follow_set[element].union(follow)
                 i += 1
 
+    def add_acceptance_transition(self):
+        set_id = self.automaton.get_acceptance_transition()
+        self.terminals_with_dollar = self.terminals.copy()
+        self.terminals_with_dollar.append('$')
+        self.add_entry(set_id)
+        self.actions_table[set_id][-1] = 'acc'
+
+    def add_entry(self, set_id):
+        if set_id not in self.actions_table:
+            self.actions_table[set_id] = ['' for _ in self.terminals_with_dollar]
+        
+    def add_shifts(self):
+        transitions = self.automaton.get_transitions_terminals_only(self.terminals)
+        for set_id in transitions:
+            self.add_entry(set_id)
+            shifts = transitions[set_id]
+            i = 0
+            for shift in shifts:
+                if shift != '':
+                    self.actions_table[set_id][i] = ('s', shift)
+                i += 1
+        print('\n', self.actions_table)
+
     def build_table(self):
-        pass
+        self.actions_table = {}
+        self.add_acceptance_transition()
+        self.add_shifts()
+
+        

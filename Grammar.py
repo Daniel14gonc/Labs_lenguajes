@@ -38,4 +38,5 @@ class Grammar(object):
         self.non_terminals.add(new_head)
         first_prod = Production(new_head, [head])
         self.productions.insert(0, first_prod)
+        self.old_first_production = self.first_production
         self.first_production = first_prod

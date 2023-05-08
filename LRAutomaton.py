@@ -14,7 +14,7 @@ class LRAutomaton(object):
     
     def create_state(self, state, item):
         state = frozenset(state)
-        self.states[state] = self.state_counter
+        self.states[self.state_counter] = state
         self.transitions[state] = ['' for _ in range(len(self.grammar_symbols))]
         self.items[state] = item
         item.number = self.state_counter
@@ -23,8 +23,8 @@ class LRAutomaton(object):
     def create_transition(self, state, new_state, symbol):
         state = frozenset(state)
         new_state = frozenset(new_state)
-        state_id = self.states[state]
-        new_state_id = self.states[new_state]
+        # state_id = self.states[state]
+        # new_state_id = self.states[new_state]
         symbol_index = self.get_symbol_index(symbol)
         self.transitions[state][symbol_index] = new_state
 
@@ -40,6 +40,8 @@ class LRAutomaton(object):
         state = items.heart.copy()
         self.create_state(state, items)
 
+        self.first_state = state
+
         self.pending_states = [state]
 
         while self.pending_states:
@@ -50,7 +52,7 @@ class LRAutomaton(object):
                 new_state = items.goto(closure, symbol).copy()
                 temp = frozenset(new_state)
                 if len(new_state) > 0:
-                    if temp not in self.states:
+                    if temp not in self.transitions:
                         items = SetOfItems(self.grammar)
                         items.heart = new_state
                         self.create_state(new_state, items)
@@ -108,3 +110,27 @@ class LRAutomaton(object):
 
     def output_graph(self):
         self.visual_graph.render(directory='output', view=False)
+
+    def get_acceptance_transition(self):
+        old_initial_head = self.grammar.old_first_production.head
+        index = self.get_symbol_index(old_initial_head)
+        target_state = self.transitions[frozenset(self.first_state)][index]
+        return self.items[target_state].number
+
+    def get_transitions_terminals_only(self, terminals):
+        resultant_transitions = {}
+        i = 0
+        for terminal in terminals:
+            index = self.get_symbol_index(terminal)
+            for state in self.transitions:
+                transition = self.transitions[state][index]
+                if transition != '':
+                    origin_set_id = self.items[state].number
+                    target_set_id = self.items[transition].number
+                    if origin_set_id not in resultant_transitions:
+                        resultant_transitions[origin_set_id] = ['' for _ in terminals]
+                    
+                    resultant_transitions[origin_set_id][i] = target_set_id
+            i += 1
+        
+        return resultant_transitions
