@@ -4,7 +4,7 @@ class SLR(object):
     
     def __init__(self, grammar) -> None:
         self.grammar = grammar
-        self.terminals = self.grammar.tokens
+        self.terminals = list(self.grammar.tokens)
         self.non_terminals = self.grammar.non_terminals
         self.first_set = {}
         self.follow_set = {}
@@ -143,3 +143,6 @@ class SLR(object):
                         follow = self.follow_set[A]
                         self.follow_set[element] = self.follow_set[element].union(follow)
                 i += 1
+
+    def build_table(self):
+        pass

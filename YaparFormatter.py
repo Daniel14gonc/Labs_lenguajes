@@ -1,14 +1,23 @@
+from YaparErrorChecker import YaparErrorChecker
+
 class YaparFormatter(object):
     
     def __init__(self) -> None:
-        pass
+        self.error_checker = YaparErrorChecker()
 
     def format_yapar_content(self, yapar_content):
         self.yapar_content = yapar_content
-        self.delete_comments()
-        self.split_file_content()
-        self.create_tokens()
-        self.create_productions()
+        self.errors = self.error_checker.check_errors(self.yapar_content)
+        functions = [self.delete_comments, self.split_file_content, self.create_tokens, self.create_productions]
+        for function in functions:
+            try:
+                function()
+            except:
+                pass
+        # self.delete_comments()
+        # self.split_file_content()
+        # self.create_tokens()
+        # self.create_productions()
 
     def delete_comments(self):
         acu = ''
