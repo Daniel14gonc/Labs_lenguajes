@@ -132,18 +132,19 @@ class SLR(object):
             while i < len(body):
                 element = body[i]
                 if element in non_terminals:
-                    if element not in self.follow_set:
-                        self.follow_set[element] = set()
-                        self.follow(element)
-                    if i < len(body) + 1:
-                        first = self.first_string(body[i + 1:]).copy()
-                        if 'ε' in first:
-                            first.remove('ε')
-                        self.follow_set[element] = self.follow_set[element].union(first)
+                    if element != A:
+                        if element not in self.follow_set:
+                            self.follow_set[element] = set()
+                            self.follow(element)
+                        if i < len(body) + 1:
+                            first = self.first_string(body[i + 1:]).copy()
+                            if 'ε' in first:
+                                first.remove('ε')
+                            self.follow_set[element] = self.follow_set[element].union(first)
 
-                    if self.check_third_follow_rule(body, i):
-                        follow = self.follow_set[A]
-                        self.follow_set[element] = self.follow_set[element].union(follow)
+                        if self.check_third_follow_rule(body, i):
+                            follow = self.follow_set[A]
+                            self.follow_set[element] = self.follow_set[element].union(follow)
                 i += 1
 
     def add_acceptance_transition(self):
