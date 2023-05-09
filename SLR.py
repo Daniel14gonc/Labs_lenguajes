@@ -1,4 +1,5 @@
 from LRAutomaton import LRAutomaton
+import pandas as pd
 
 class SLR(object):
     
@@ -9,9 +10,10 @@ class SLR(object):
         self.first_set = {}
         self.follow_set = {}
 
+    def calculate_first_and_follow(self):
         self.calculate_first()
         self.calculate_follow()
-        
+
     def calculate_first(self):
         productions = self.grammar.productions
         for terminal in self.terminals:
@@ -84,11 +86,12 @@ class SLR(object):
                 previous_production_epsilon = True
                 while i < len(body) and previous_production_epsilon:
                     element = body[i]
-                    if element not in self.first_set:
-                        self.first(element)
-                    other_first = self.first_set[element]
-                    self.add_first_set(X, other_first)
-                    previous_production_epsilon = self.check_epsilon(element)
+                    if element != X:
+                        if element not in self.first_set:
+                            self.first(element)
+                        other_first = self.first_set[element]
+                        self.add_first_set(X, other_first)
+                        previous_production_epsilon = self.check_epsilon(element)
                     i += 1
                 
                 if previous_production_epsilon:
@@ -136,7 +139,6 @@ class SLR(object):
                         first = self.first_string(body[i + 1:]).copy()
                         if 'ε' in first:
                             first.remove('ε')
-                        # print(body[i + 1:], body, first)
                         self.follow_set[element] = self.follow_set[element].union(first)
 
                     if self.check_third_follow_rule(body, i):
@@ -145,11 +147,11 @@ class SLR(object):
                 i += 1
 
     def add_acceptance_transition(self):
-        set_id = self.automaton.get_acceptance_transition()
+        self.acceptance_set_id = self.automaton.get_acceptance_transition()
         self.terminals_with_dollar = self.terminals.copy()
         self.terminals_with_dollar.append('$')
-        self.add_entry(set_id)
-        self.actions_table[set_id][-1] = 'acc'
+        self.add_entry(self.acceptance_set_id)
+        self.actions_table[self.acceptance_set_id][-1] = 'acc'
 
     def add_entry(self, set_id):
         if set_id not in self.actions_table:
@@ -165,11 +167,36 @@ class SLR(object):
                 if shift != '':
                     self.actions_table[set_id][i] = ('s', shift)
                 i += 1
-        print('\n', self.actions_table)
+
+    def add_reduce(self):
+        states = self.automaton.states
+        for state in states:
+            state_id = self.automaton.get_state_id(state)
+            self.add_entry(state_id)
+            for element in state:
+                production = element[0]
+                head = production.head
+                dot_pointer = element[1]
+                body_len = len(production.body)
+                if body_len == dot_pointer + 1:
+                    follow_for_head = self.follow_set[head]
+                    production_index = self.grammar.index_of(production)
+                    for terminal in follow_for_head:
+                        symbol_index = self.terminals_with_dollar.index(terminal)
+                        if self.actions_table[state_id][symbol_index] != 'acc':
+                            self.actions_table[state_id][symbol_index] = ('r', production_index)
 
     def build_table(self):
         self.actions_table = {}
         self.add_acceptance_transition()
         self.add_shifts()
+        self.add_reduce()
+        sorted_dict = dict(sorted(self.actions_table.items()))
+        df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.terminals_with_dollar)
+        print(df)
+    
+    def build(self):
+        self.calculate_first_and_follow()
+        self.build_table()
 
         

@@ -26,13 +26,6 @@ class ParserBuilder(object):
 
     def convert_productions(self):
         self.productions = self.yapar_formatter.productions
-
-    def create_LR_automaton(self):
-        grammar = self.build_grammar()
-        grammar.augument()
-        automaton = LRAutomaton(grammar)
-        automaton.build()
-        automaton.visualize()
     
     def check_errors(self):
         errors = ''
@@ -73,6 +66,9 @@ class ParserBuilder(object):
 
         return error
     
+    def first_and_follow(self):
+        self.slr.calculate_first_and_follow()
+    
     def build_grammar(self):
         grammar = Grammar(self.productions)
         tokens = self.yapar_formatter.tokens
@@ -87,4 +83,4 @@ class ParserBuilder(object):
         self.slr.build_LR_automaton()
     
     def build_SLR(self):
-        self.slr.build_table()
+        self.slr.build()

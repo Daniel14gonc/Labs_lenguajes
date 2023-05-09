@@ -1,4 +1,4 @@
-%token a b d g h
+%token a b c d g h
 
 %%
 

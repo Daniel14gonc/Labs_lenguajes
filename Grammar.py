@@ -7,7 +7,7 @@ class Grammar(object):
         self.productions = []
         self.first_production = None
         self.heads = set()
-        self.grammar_symbols = set()
+        self.grammar_symbols = []
         while i < len(productions):
             head, body = productions[i]
             self.heads.add(head)
@@ -21,14 +21,19 @@ class Grammar(object):
     def create_grammar_symbols(self):
         for production in self.productions:
             head, body = production.get_attributes()
-            self.grammar_symbols.add(head)
+            self.grammar_symbols.append(head)
             for symbol in body:
                 if symbol != 'ε':
-                    self.grammar_symbols.add(symbol)
+                    self.grammar_symbols.append(symbol)
 
     def split_grammar_elements(self, tokens):
-        self.tokens = set(tokens)
-        self.non_terminals = self.grammar_symbols - self.tokens
+        self.tokens = tokens
+        self.non_terminals = set(self.grammar_symbols) - set(self.tokens)
+
+    def index_of(self, production):
+        if production in self.productions:
+            return self.productions.index(production)
+        return None
 
     def augument(self):
         head, _ = self.first_production.get_attributes()

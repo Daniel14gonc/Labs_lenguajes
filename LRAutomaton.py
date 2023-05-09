@@ -3,18 +3,20 @@ import graphviz
 
 class LRAutomaton(object):
     def __init__(self, grammar) -> None:
-        self.states = []
+        self.states = set()
         self.transitions = {}
         self.start_state = None
         self.grammar = grammar
         self.grammar_symbols = list(grammar.grammar_symbols)
-        self.states = {}
         self.state_counter = 0
         self.items = {}
+
+    def get_state_id(self, state):
+        return self.items[state].number
     
     def create_state(self, state, item):
         state = frozenset(state)
-        self.states[self.state_counter] = state
+        self.states.add(state)
         self.transitions[state] = ['' for _ in range(len(self.grammar_symbols))]
         self.items[state] = item
         item.number = self.state_counter
@@ -29,7 +31,9 @@ class LRAutomaton(object):
         self.transitions[state][symbol_index] = new_state
 
     def get_symbol_index(self, symbol):
-        return self.grammar_symbols.index(symbol)
+        if symbol in self.grammar_symbols:
+            return self.grammar_symbols.index(symbol)
+        return None
 
     # TODO: tengo que tener un diccionario con los indices asociados a los items para luego usar en la pila (ejemplo de Carlos).
     def build(self):
@@ -45,7 +49,7 @@ class LRAutomaton(object):
         self.pending_states = [state]
 
         while self.pending_states:
-            state = self.pending_states.pop()
+            state = self.pending_states.pop(0)
             items = self.items[frozenset(state)]
             closure = items.closure().copy()
             for symbol in self.grammar_symbols:
@@ -122,15 +126,16 @@ class LRAutomaton(object):
         i = 0
         for terminal in terminals:
             index = self.get_symbol_index(terminal)
-            for state in self.transitions:
-                transition = self.transitions[state][index]
-                if transition != '':
-                    origin_set_id = self.items[state].number
-                    target_set_id = self.items[transition].number
-                    if origin_set_id not in resultant_transitions:
-                        resultant_transitions[origin_set_id] = ['' for _ in terminals]
-                    
-                    resultant_transitions[origin_set_id][i] = target_set_id
+            if index != None:
+                for state in self.transitions:
+                    transition = self.transitions[state][index]
+                    if transition != '':
+                        origin_set_id = self.items[state].number
+                        target_set_id = self.items[transition].number
+                        if origin_set_id not in resultant_transitions:
+                            resultant_transitions[origin_set_id] = ['' for _ in terminals]
+                        
+                        resultant_transitions[origin_set_id][i] = target_set_id
             i += 1
         
         return resultant_transitions

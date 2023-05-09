@@ -1,6 +1,6 @@
 class SetOfItems(object):
     def __init__(self, grammar) -> None:
-        self.heart = set()
+        self.heart = []
         self.body = set()
         self.productions = set()
         self.grammar = grammar
@@ -9,12 +9,12 @@ class SetOfItems(object):
 
     def set_heart(self, productions):
         for production in productions:
-            self.heart.add(production)
+            self.heart.append(production)
     
     # TODO: revisar añadir producciones visitadas
     def closure(self):
         productions = self.grammar.productions
-        closure = {item for item in self.heart}
+        closure = [item for item in self.heart]
         self.stack = [item for item in self.heart]
         
         productions_visited = set()
@@ -30,7 +30,7 @@ class SetOfItems(object):
                     if production not in productions_visited:
                         head = production.head
                         if head == next_element:
-                            closure.add((production, -1))
+                            closure.append((production, -1))
                             self.stack.append((production, -1))
                             productions_visited.add(production)
         return closure
@@ -83,7 +83,7 @@ class SetOfItems(object):
     
     def __repr__(self) -> str:
         closure = self.closure()
-        body = closure - self.heart
+        body = set(closure) - set(self.heart)
         res = "I" + str(self.number)
         res += "\nHeart\n"
 
