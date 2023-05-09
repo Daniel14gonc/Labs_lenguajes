@@ -34,7 +34,7 @@ class SLR(object):
         for production in productions:
             head = production.head
             self.follow(head)
-        print('\nSiguiente:', self.follow_set)
+        print('\nSiguiente:', self.follow_set, '\n')
 
     def build_LR_automaton(self):
         self.grammar.augument()
@@ -91,7 +91,7 @@ class SLR(object):
                             self.first(element)
                         other_first = self.first_set[element]
                         self.add_first_set(X, other_first)
-                        previous_production_epsilon = self.check_epsilon(element)
+                    previous_production_epsilon = self.check_epsilon(element)
                     i += 1
                 
                 if previous_production_epsilon:
