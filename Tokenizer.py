@@ -2,6 +2,9 @@ from NFA import NFA
 from regex import Regex
 import pandas as pd
 import re
+from Reader import Reader
+from TokenLex import TokenLex
+from termcolor import colored
 
 # Función para convertir sets a listas
 def set_to_tuple(val):
@@ -134,3 +137,74 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
+
+    def read_source_code(self, filename):
+        self.source_code = Reader(filename).read()
+    
+    def initialize_token_recognition(self):
+        self.initial = 0
+        self.advance = 0
+        self.latest_token = None
+        self.line = 1
+        self.line_pos = -1
+        self.errors = []
+        self.tokens = []
+        self.token_errors = []
+    
+    def has_next_token(self):
+        return self.initial < len(self.source_code)
+    
+    def get_new_token(self, content, line, position):
+        content = content.replace('return', '')
+        content = content.replace("'", '')
+        content = content.replace('"', '')
+        content = content.strip()
+        return TokenLex(content, line, position)
+
+
+    def next_token(self):
+        self.advance = self.initial
+        self.begin_simulation()
+        longest_lexeme = False
+        self.latest_token = None
+        acu = ""
+        count = 0
+        has_transitions = True
+        count = -1
+        line_count = 0
+        latest_pos = self.initial
+        token = None
+        while has_transitions and self.advance < len(self.source_code):
+            symbol = self.source_code[self.advance]
+            self.simulate_symbol(symbol)
+            accepted = self.is_accepted()
+            has_transitions = self.has_transitions()
+            longest_lexeme = accepted
+            if longest_lexeme:
+                self.latest_token = self.get_token()
+                count = 0
+                line_count = 0
+                latest_pos = self.advance + 1
+            else:
+                acu += symbol
+                count += 1
+                if symbol == '\n':
+                    line_count += 1
+
+            self.advance += 1
+            self.line_pos += 1
+            if symbol == '\n':
+                if line_count == 0:
+                    self.line += 1
+                    self.line_pos = -1
+
+        self.line_pos -= count
+        if self.latest_token != None:
+            token = self.get_new_token(self.latest_token, self.line, self.line_pos)
+        else:
+            latest_pos = self.advance
+            self.token_errors.append(f"Lexical error on line {self.line} at position {self.line_pos}, element {colored(acu, 'green')}\n")
+            token = self.get_new_token('ERROR', self.line, self.line_pos)
+        self.initial = latest_pos
+
+        return token

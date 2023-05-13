@@ -121,11 +121,11 @@ class LRAutomaton(object):
         target_state = self.transitions[frozenset(self.first_state)][index]
         return self.items[target_state].number
 
-    def get_transitions_terminals_only(self, terminals):
+    def get_transitions_with_grammar_symbols(self, symbols):
         resultant_transitions = {}
         i = 0
-        for terminal in terminals:
-            index = self.get_symbol_index(terminal)
+        for symbol in symbols:
+            index = self.get_symbol_index(symbol)
             if index != None:
                 for state in self.transitions:
                     transition = self.transitions[state][index]
@@ -133,7 +133,7 @@ class LRAutomaton(object):
                         origin_set_id = self.items[state].number
                         target_set_id = self.items[transition].number
                         if origin_set_id not in resultant_transitions:
-                            resultant_transitions[origin_set_id] = ['' for _ in terminals]
+                            resultant_transitions[origin_set_id] = ['' for _ in symbols]
                         
                         resultant_transitions[origin_set_id][i] = target_set_id
             i += 1

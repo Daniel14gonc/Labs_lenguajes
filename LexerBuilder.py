@@ -18,7 +18,7 @@ class LexerBuilder(object):
         self.yalex_content = self.reader.read()
     
     def get_tokens_from_yalex(self):
-        self.self.formatter = YalexFormatter()
+        self.formatter = YalexFormatter()
         self.yalex_errors = self.formatter.format_yalex_content(self.yalex_content)
         self.tokens = self.formatter.tokens
         self.header = textwrap.dedent(self.formatter.get_header())
@@ -63,12 +63,12 @@ class LexerBuilder(object):
             priority += 1
 
     def concat_files_needed(self):
-        files = ["Reader", "Node", "AST", "FAErrorChecker", "STNode", "ST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "DFA", "NFA", "Tokenizer"]
+        files = ["Reader", "Node", "AST", "FAErrorChecker", "STNode", "ST", "RegexErrorChecker", "AFVisual", "regex", "FAErrorChecker", "FA", "DFA", "NFA", "Tokenizer", "TokenLex"]
         imports = ["from regex import Regex", "from Node import Node", "from AST import AST", "from ST import ST",
                    "from RegexErrorChecker import RegexErrorChecker", "from AFVisual import AFVisual", 
                    "from FA import FA", "from DFA import DFA",
                    "from AST import AST", "from STNode import STNode", "from FAErrorChecker import FAErrorChecker",
-                   "from NFA import NFA"]
+                   "from NFA import NFA", "from TokenLex import TokenLex"]
         
         for file in files:
             with open(file + ".py", "rt") as archivo:
@@ -113,23 +113,22 @@ class LexerBuilder(object):
         """)
         self.functionality.append(tokenizer_concat)
 
-        read_text = textwrap.dedent("""
-            def evaluate_file(path):
-                content = Reader(path).read()
-                return content
-            """)
-        self.functionality.append(read_text)
+        # read_text = textwrap.dedent("""
+        #     def evaluate_file(path):
+        #         content = Reader(path).read()
+        #         return content
+        #     """)
+        # self.functionality.append(read_text)
 
-        token_evaluation = textwrap.dedent("""
-            def output_tokens(tokens):
-                for token in tokens:
-                    exec(token)
-            """)
-        self.functionality.append(token_evaluation) 
+        # token_evaluation = textwrap.dedent("""
+        #     def output_tokens(tokens):
+        #         for token in tokens:
+        #             exec(token)
+        #     """)
+        # self.functionality.append(token_evaluation) 
 
         text = """
         import sys
-        from termcolor import colored
 
         args = sys.argv
 
@@ -139,65 +138,10 @@ class LexerBuilder(object):
         else:
             raise Exception("Source code not specified.")
         tokenizer.set_actions(actions)
-        source = evaluate_file(path)
-        initial = 0
-        advance = 0
-        latest_token = None
-        line = 1
-        line_pos = -1
-        errors = []
-        tokens = []
-
-        while initial < len(source):
-            advance = initial
-            tokenizer.begin_simulation()
-            longest_lexeme = False
-            latest_token = None
-            acu = ""
-            count = 0
-            has_transitions = True
-            count = -1
-            line_count = 0
-            latest_pos = initial
-            while has_transitions and advance < len(source):
-                symbol = source[advance]
-                tokenizer.simulate_symbol(symbol)
-                accepted = tokenizer.is_accepted()
-                has_transitions = tokenizer.has_transitions()
-                longest_lexeme = accepted
-                if longest_lexeme:
-                    latest_token = tokenizer.get_token()
-                    count = 0
-                    line_pos_count = 0
-                    line_count = 0
-                    latest_pos = advance + 1
-                else:
-                    acu += symbol
-                    count += 1
-                    if symbol == '\\n':
-                        line_count += 1
-
-                advance += 1
-                line_pos += 1
-                if symbol == '\\n':
-                    if line_count == 0:
-                        line += 1
-                        line_pos = -1
-
-            line_pos = line_pos - count
-            if latest_token != None:
-                tokens.append(latest_token)
-            else:
-                latest_pos = advance
-                errors.append(f"Lexical error on line {line} at position {line_pos}, element {colored(acu, 'green')}\\n")
-            initial = latest_pos
-
-        if errors:
-            error_output = "\\nLexical errors:\\n"
-            for error in errors:
-                error_output += error
-            raise Exception(error_output)
-        output_tokens(tokens)
+        tokenizer.read_source_code(path)
+        # tokenizer.initialize_token_recognition()
+        # while tokenizer.has_next_token():
+        #     print(tokenizer.next_token())
         """
 
         token_evaluator = textwrap.dedent(text)

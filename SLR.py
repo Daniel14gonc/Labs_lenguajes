@@ -6,9 +6,11 @@ class SLR(object):
     def __init__(self, grammar) -> None:
         self.grammar = grammar
         self.terminals = list(self.grammar.tokens)
-        self.non_terminals = self.grammar.non_terminals
+        self.non_terminals = list(self.grammar.non_terminals)
         self.first_set = {}
         self.follow_set = {}
+        self.actions_table = {}
+        self.goto_table = {}
 
     def calculate_first_and_follow(self):
         self.calculate_first()
@@ -159,8 +161,12 @@ class SLR(object):
         if set_id not in self.actions_table:
             self.actions_table[set_id] = ['' for _ in self.terminals_with_dollar]
         
+        if set_id not in self.goto_table:
+            self.goto_table[set_id] = ['' for _ in self.non_terminals]
+
+        
     def add_shifts(self):
-        transitions = self.automaton.get_transitions_terminals_only(self.terminals)
+        transitions = self.automaton.get_transitions_with_grammar_symbols(self.terminals)
         for set_id in transitions:
             self.add_entry(set_id)
             shifts = transitions[set_id]
@@ -189,7 +195,6 @@ class SLR(object):
                             self.actions_table[state_id][symbol_index] = ('r', production_index)
 
     def build_actions_table(self):
-        self.actions_table = {}
         self.add_acceptance_transition()
         self.add_shifts()
         self.add_reduce()
@@ -198,7 +203,19 @@ class SLR(object):
         print(df)
 
     def build_goto_table(self):
-        pass
+        transitions = self.automaton.get_transitions_with_grammar_symbols(self.non_terminals)
+        for set_id in transitions:
+            self.add_entry(set_id)
+            gotos = transitions[set_id]
+            i = 0
+            for goto in gotos:
+                if goto != '':
+                    self.goto_table[set_id][i] = goto
+                i += 1
+        
+        sorted_dict = dict(sorted(self.goto_table.items()))
+        df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.non_terminals)
+        print(df)
     
     def build(self):
         self.calculate_first_and_follow()

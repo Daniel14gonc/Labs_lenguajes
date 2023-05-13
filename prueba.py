@@ -5,7 +5,7 @@ class Reader(object):
         self.path = path
     
     def read(self):
-        file = open(self.path, 'r')
+        file = open(self.path, 'r', encoding='utf-8')
         self.file_content = file.read()
         file.close()
         return self.file_content
@@ -1087,6 +1087,9 @@ class NFA(FA):
 
 import pandas as pd
 import re
+from Reader import Reader
+
+from termcolor import colored
 
 # Función para convertir sets a listas
 def set_to_tuple(val):
@@ -1219,8 +1222,87 @@ class Tokenizer(NFA):
             self.s = set()
         if element != 'ε':
             self.s = self.e_closure(self.move(self.s, element))
-regexes = ['if','for','(0|1|2|3|4|5|6|7|8|9)+\.(0|1|2|3|4|5|6|7|8|9)+','(0|1|2|3|4|5|6|7|8|9)+','((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*)*xyz','\"((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9)|( |\t|\n))+\"','( |\t|\n)+']
-actions_tokens = [(0, "print( 'IF' )"), (1, "print( 'FOR' )"), (2, "print( 'FLOAT' )"), (3, "print( 'INTEGER' )"), (4, "print( 'ID' )"), (5, "print( 'STRING' )"), (6, '')]
+
+    def read_source_code(self, filename):
+        self.source_code = Reader(filename).read()
+    
+    def initialize_token_recognition(self):
+        self.initial = 0
+        self.advance = 0
+        self.latest_token = None
+        self.line = 1
+        self.line_pos = -1
+        self.errors = []
+        self.tokens = []
+        self.token_errors = []
+    
+    def has_next_token(self):
+        return self.initial < len(self.source_code)
+    
+    def get_new_token(self, content, line, position):
+        content = content.replace('return', '')
+        content = content.replace("'", '')
+        content = content.replace('"', '')
+        content = content.strip()
+        return TokenLex(content, line, position)
+
+
+    def next_token(self):
+        self.advance = self.initial
+        self.begin_simulation()
+        longest_lexeme = False
+        self.latest_token = None
+        acu = ""
+        count = 0
+        has_transitions = True
+        count = -1
+        line_count = 0
+        latest_pos = self.initial
+        token = None
+        while has_transitions and self.advance < len(self.source_code):
+            symbol = self.source_code[self.advance]
+            self.simulate_symbol(symbol)
+            accepted = self.is_accepted()
+            has_transitions = self.has_transitions()
+            longest_lexeme = accepted
+            if longest_lexeme:
+                self.latest_token = self.get_token()
+                count = 0
+                line_count = 0
+                latest_pos = self.advance + 1
+            else:
+                acu += symbol
+                count += 1
+                if symbol == '\n':
+                    line_count += 1
+
+            self.advance += 1
+            self.line_pos += 1
+            if symbol == '\n':
+                if line_count == 0:
+                    self.line += 1
+                    self.line_pos = -1
+
+        self.line_pos -= count
+        if self.latest_token != None:
+            token = self.get_new_token(self.latest_token, self.line, self.line_pos)
+        else:
+            latest_pos = self.advance
+            self.token_errors.append(f"Lexical error on line {self.line} at position {self.line_pos}, element {colored(acu, 'green')}\n")
+            token = self.get_new_token('ERROR', self.line, self.line_pos)
+        self.initial = latest_pos
+
+        return token
+class TokenLex(object):
+    def __init__(self, type, line, position) -> None:
+        self.type = type
+        self.line = line
+        self.position = position
+    
+    def __repr__(self) -> str:
+        return self.type
+regexes = ['( |\t|\n)+','(a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)((a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z)|(0|1|2|3|4|5|6|7|8|9))*','-?(0|1|2|3|4|5|6|7|8|9)+','\+','\*','=']
+actions_tokens = [(0, ''), (1, 'return  "Identificador"'), (2, 'return  "Numero"'), (3, 'return  "Operador de suma"'), (4, 'return  "Operador de multiplicacion"'), (5, 'return  "Operador de asignacion"')]
 
 count = 1
 NFAs = []
@@ -1244,18 +1326,7 @@ for nfa in NFAs:
 tokenizer.edit_meta_alphabet()
 
 
-def evaluate_file(path):
-    content = Reader(path).read()
-    return content
-
-
-def output_tokens(tokens):
-    for token in tokens:
-        exec(token)
-
-
 import sys
-from termcolor import colored
 
 args = sys.argv
 
@@ -1264,66 +1335,10 @@ if len(args) > 1:
     path = args[1]
 else:
     raise Exception("Source code not specified.")
-
 tokenizer.set_actions(actions)
-source = evaluate_file(path)
-initial = 0
-advance = 0
-latest_token = None
-line = 1
-line_pos = -1
-errors = []
-tokens = []
-
-while initial < len(source):
-    advance = initial
-    tokenizer.begin_simulation()
-    longest_lexeme = False
-    latest_token = None
-    acu = ""
-    count = 0
-    has_transitions = True
-    count = -1
-    line_count = 0
-    latest_pos = initial
-    while has_transitions and advance < len(source):
-        symbol = source[advance]
-        tokenizer.simulate_symbol(symbol)
-        accepted = tokenizer.is_accepted()
-        has_transitions = tokenizer.has_transitions()
-        longest_lexeme = accepted
-        if longest_lexeme:
-            latest_token = tokenizer.get_token()
-            count = 0
-            line_pos_count = 0
-            line_count = 0
-            latest_pos = advance + 1
-        else:
-            acu += symbol
-            count += 1
-            if symbol == '\n':
-                line_count += 1
-
-        advance += 1
-        line_pos += 1
-        if symbol == '\n':
-            if line_count == 0:
-                line += 1
-                line_pos = -1
-
-    line_pos = line_pos - count
-    if latest_token != None:
-        tokens.append(latest_token)
-    else:
-        latest_pos = advance
-        errors.append(f"Lexical error on line {line} at position {line_pos}, element {colored(acu, 'green')}\n")
-    initial = latest_pos
-
-if errors:
-    error_output = "\nLexical errors:\n"
-    for error in errors:
-        error_output += error
-    raise Exception(error_output)
-output_tokens(tokens)
+tokenizer.read_source_code(path)
+# tokenizer.initialize_token_recognition()
+# while tokenizer.has_next_token():
+#     print(tokenizer.next_token())
 
 
