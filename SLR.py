@@ -143,7 +143,8 @@ class SLR(object):
                             self.follow_set[element] = self.follow_set[element].union(first)
 
                         if self.check_third_follow_rule(body, i):
-                            follow = self.follow_set[A]
+                            follow = self.follow_set[A].copy()
+                            follow = follow - {'ε'}
                             self.follow_set[element] = self.follow_set[element].union(follow)
                 i += 1
 
@@ -187,7 +188,7 @@ class SLR(object):
                         if self.actions_table[state_id][symbol_index] != 'acc':
                             self.actions_table[state_id][symbol_index] = ('r', production_index)
 
-    def build_table(self):
+    def build_actions_table(self):
         self.actions_table = {}
         self.add_acceptance_transition()
         self.add_shifts()
@@ -195,9 +196,13 @@ class SLR(object):
         sorted_dict = dict(sorted(self.actions_table.items()))
         df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.terminals_with_dollar)
         print(df)
+
+    def build_goto_table(self):
+        pass
     
     def build(self):
         self.calculate_first_and_follow()
-        self.build_table()
+        self.build_actions_table()
+        self.build_goto_table()
 
         

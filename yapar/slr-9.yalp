@@ -1,0 +1,8 @@
+%token a b c d g h
+
+%%
+
+S: A C B | C b b | B a;
+A: d a | B C;
+B: g | ε;
+C: h | ε;
