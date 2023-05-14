@@ -84,3 +84,7 @@ class ParserBuilder(object):
     
     def build_SLR(self):
         self.slr.build()
+
+    def parse(self):
+        self.slr.initialize_parse()
+        self.slr.parse()

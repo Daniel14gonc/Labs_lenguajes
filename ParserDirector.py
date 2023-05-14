@@ -14,3 +14,4 @@ class ParserDirector(object):
         self.parser_builder.create_SLR()
         self.parser_builder.build_LR_automaton()
         self.parser_builder.build_SLR()
+        self.parser_builder.parse()

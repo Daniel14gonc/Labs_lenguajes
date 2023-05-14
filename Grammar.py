@@ -34,6 +34,11 @@ class Grammar(object):
         if production in self.productions:
             return self.productions.index(production)
         return None
+    
+    def get_production_by_index(self, index):
+        if index >= len(self.productions) or index < 0:
+            return None
+        return self.productions[index]
 
     def augument(self):
         head, _ = self.first_production.get_attributes()

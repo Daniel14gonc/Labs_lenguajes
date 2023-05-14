@@ -134,20 +134,19 @@ class SLR(object):
             while i < len(body):
                 element = body[i]
                 if element in non_terminals:
-                    if element != A:
-                        if element not in self.follow_set:
-                            self.follow_set[element] = set()
-                            self.follow(element)
-                        if i < len(body) + 1:
-                            first = self.first_string(body[i + 1:]).copy()
-                            if 'ε' in first:
-                                first.remove('ε')
-                            self.follow_set[element] = self.follow_set[element].union(first)
+                    if element not in self.follow_set:
+                        self.follow_set[element] = set()
+                        self.follow(element)
+                    if i < len(body) + 1:
+                        first = self.first_string(body[i + 1:]).copy()
+                        if 'ε' in first:
+                            first.remove('ε')
+                        self.follow_set[element] = self.follow_set[element].union(first)
 
-                        if self.check_third_follow_rule(body, i):
-                            follow = self.follow_set[A].copy()
-                            follow = follow - {'ε'}
-                            self.follow_set[element] = self.follow_set[element].union(follow)
+                    if self.check_third_follow_rule(body, i):
+                        follow = self.follow_set[A].copy()
+                        follow = follow - {'ε'}
+                        self.follow_set[element] = self.follow_set[element].union(follow)
                 i += 1
 
     def add_acceptance_transition(self):
@@ -221,5 +220,76 @@ class SLR(object):
         self.calculate_first_and_follow()
         self.build_actions_table()
         self.build_goto_table()
+
+    def initialize_parse(self):
+        self.stack = []
+        self.stack.append(0)
+        self.symbol_stack = []
+        self.latest_token = None
+
+    def set_latest_token(self, token):
+        self.latest_token = token
+    
+    def need_next_token(self):
+        return self.latest_token == None
+    
+    def get_terminal_index(self, symbol):
+        return self.terminals_with_dollar.index(symbol)
+    
+    def get_non_terminal_index(self, symbol):
+        return self.non_terminals.index(symbol)
+    
+    # TODO: muchas cosas pueden crashear F :(
+    def parse(self, lexer=None):
+        self.accepted = False
+        tokens = ['ID', 'TIMES', 'ID', 'PLUS', 'ID']
+        # while lexer.has_next_token():
+        #     if self.need_next_token():
+        #         next_token = lexer.next_token()
+        #         self.latest_token = next_token.type
+        #         self.parse_next()
+        i = 0
+        while tokens:
+            if self.need_next_token():
+                next_token = tokens.pop(0)
+                self.latest_token = next_token
+            self.parse_next()
+            i += 1
+        while len(self.stack) > 1 and not self.accepted:
+            self.latest_token = '$'
+            self.parse_next()
+        print('\nAccepted:', self.accepted)
+
+    def parse_next(self):
+        index = self.get_terminal_index(self.latest_token)
+        peek = self.stack[-1]
+        action_entry = self.actions_table[peek][index]
+        self.execute_action(action_entry)
+
+        
+    def execute_action(self, action_entry):
+        if len(action_entry) == 2:
+            action, state = action_entry
+            if action == 's':
+                self.stack.append(state)
+                self.symbol_stack.append(self.latest_token)
+                self.latest_token = None
+            elif action == 'r':
+                production = self.grammar.get_production_by_index(state)
+                head, body = production.get_attributes()
+                elements_to_pop = len(body)
+                for _  in range(elements_to_pop):
+                    self.symbol_stack.pop()
+                    self.stack.pop()
+                peek = self.stack[-1]
+                head_index = self.get_non_terminal_index(head)
+                new_state = self.goto_table[peek][head_index]
+                self.symbol_stack.append(head)
+                self.stack.append(new_state)
+        elif action_entry == 'acc':
+            self.accepted = True
+
+
+
 
         
