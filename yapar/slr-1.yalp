@@ -25,3 +25,5 @@ factor:
     LPAREN expression RPAREN
   | ID
 ;
+
+/*  (ID)*ID+(ID+ID)   */

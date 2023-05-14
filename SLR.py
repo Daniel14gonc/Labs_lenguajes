@@ -243,6 +243,9 @@ class SLR(object):
     def parse(self, lexer=None):
         self.accepted = False
         tokens = ['ID', 'TIMES', 'ID', 'PLUS', 'ID']
+        tokens = ['LPAREN', 'ID', 'RPAREN', 'PLUS', 'LPAREN', 'ID', 'PLUS', 'ID', 'RPAREN']
+
+        # (ID)*ID+(ID+ID)
         # while lexer.has_next_token():
         #     if self.need_next_token():
         #         next_token = lexer.next_token()
@@ -256,7 +259,8 @@ class SLR(object):
             self.parse_next()
             i += 1
         while len(self.stack) > 1 and not self.accepted:
-            self.latest_token = '$'
+            if self.latest_token == None:
+                self.latest_token = '$'
             self.parse_next()
         print('\nAccepted:', self.accepted)
 
@@ -278,7 +282,7 @@ class SLR(object):
                 production = self.grammar.get_production_by_index(state)
                 head, body = production.get_attributes()
                 elements_to_pop = len(body)
-                for _  in range(elements_to_pop):
+                for _ in range(elements_to_pop):
                     self.symbol_stack.pop()
                     self.stack.pop()
                 peek = self.stack[-1]
