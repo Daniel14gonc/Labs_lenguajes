@@ -226,6 +226,7 @@ class SLR(object):
         self.stack.append(0)
         self.symbol_stack = []
         self.latest_token = None
+        self.errors = []
 
     def set_latest_token(self, token):
         self.latest_token = token
@@ -234,16 +235,20 @@ class SLR(object):
         return self.latest_token == None
     
     def get_terminal_index(self, symbol):
+        if symbol not in self.terminals_with_dollar:
+            return None
         return self.terminals_with_dollar.index(symbol)
     
     def get_non_terminal_index(self, symbol):
+        if symbol not in self.non_terminals:
+            return None
         return self.non_terminals.index(symbol)
     
     # TODO: muchas cosas pueden crashear F :(
     def parse(self, lexer=None):
         self.accepted = False
         tokens = ['ID', 'TIMES', 'ID', 'PLUS', 'ID']
-        tokens = ['LPAREN', 'ID', 'RPAREN', 'PLUS', 'LPAREN', 'ID', 'PLUS', 'ID', 'RPAREN']
+        tokens = ['LPAREN', 'ID', 'RPAREN', 'PLUS', 'LPAREN', 'ID', 'PLUS', 'PLUS', 'RPAREN', 'ID', 'RPAREN']
 
         # (ID)*ID+(ID+ID)
         # while lexer.has_next_token():
@@ -262,12 +267,25 @@ class SLR(object):
             if self.latest_token == None:
                 self.latest_token = '$'
             self.parse_next()
+        if self.errors:
+            error_msg = '\nSyntax errors:\n'
+            for error in self.errors:
+                error_msg += error
+            raise Exception(error_msg)
         print('\nAccepted:', self.accepted)
 
     def parse_next(self):
         index = self.get_terminal_index(self.latest_token)
+        if index == None:
+            self.errors.append(f'Error on token: {self.latest_token}\n')
+            self.latest_token = None
+            return
         peek = self.stack[-1]
         action_entry = self.actions_table[peek][index]
+        if action_entry == '':
+            self.errors.append(f'Error on token: {self.latest_token}\n')
+            self.latest_token = None
+            return
         self.execute_action(action_entry)
 
         
