@@ -1,4 +1,315 @@
-from LRAutomaton import LRAutomaton
+class Production(object):
+    def __init__(self, head, body) -> None:
+        self.head = head
+        self.body = body
+
+    def get_attributes(self):
+        return self.head, self.body
+    
+    def __repr__(self) -> str:
+        return self.head + " -> " + " ".join(element for element in self.body)
+
+
+class Grammar(object):
+    
+    def __init__(self, productions) -> None:
+        i = 0
+        self.productions = []
+        self.first_production = None
+        self.heads = set()
+        self.grammar_symbols = []
+        while i < len(productions):
+            head, body = productions[i]
+            self.heads.add(head)
+            production = Production(head, body)
+            if i == 0:
+                self.first_production = production
+            self.productions.append(production)
+            i += 1
+        self.create_grammar_symbols()
+
+    def create_grammar_symbols(self):
+        for production in self.productions:
+            head, body = production.get_attributes()
+            self.grammar_symbols.append(head)
+            for symbol in body:
+                if symbol != 'ε':
+                    self.grammar_symbols.append(symbol)
+
+    def split_grammar_elements(self, tokens):
+        self.tokens = tokens
+        self.non_terminals = set(self.grammar_symbols) - set(self.tokens)
+
+    def index_of(self, production):
+        if production in self.productions:
+            return self.productions.index(production)
+        return None
+    
+    def get_production_by_index(self, index):
+        if index >= len(self.productions) or index < 0:
+            return None
+        return self.productions[index]
+
+    def augument(self):
+        head, _ = self.first_production.get_attributes()
+        new_head = head + "'"
+        if new_head in self.heads:
+            new_head = head + '@'
+        self.non_terminals.add(new_head)
+        first_prod = Production(new_head, [head])
+        self.productions.insert(0, first_prod)
+        self.old_first_production = self.first_production
+        self.first_production = first_prod
+class SetOfItems(object):
+    def __init__(self, grammar) -> None:
+        self.heart = []
+        self.body = set()
+        self.productions = set()
+        self.grammar = grammar
+        self.transition_symbols = set()
+        self.number = 0
+
+    def set_heart(self, productions):
+        for production in productions:
+            self.heart.append(production)
+    
+    # TODO: revisar añadir producciones visitadas
+    def closure(self):
+        productions = self.grammar.productions
+        closure = [item for item in self.heart]
+        self.stack = [item for item in self.heart]
+        
+        productions_visited = set()
+
+        while self.stack:
+            item = self.stack.pop()
+            production = item[0]
+            dot_pos = item[1]
+            body = production.body
+            if len(body) > dot_pos + 1:
+                next_element = body[dot_pos + 1]
+                for production in productions:
+                    if production not in productions_visited:
+                        head = production.head
+                        if head == next_element:
+                            closure.append((production, -1))
+                            self.stack.append((production, -1))
+                            productions_visited.add(production)
+        return closure
+
+    def add_symbol(self, item):
+        production = item[0]
+        dot_pos = item[1]
+        body = production.body
+        if len(body) > dot_pos + 1:
+            transition_symbol = body[dot_pos + 1]
+            self.transition_symbols.add(transition_symbol)
+    
+    def get_possible_transitions(self):
+        for item in self.heart:
+            self.add_symbol(item)
+
+        for item in self.body:
+            self.add_symbol(item)
+        
+        return self.transition_symbols
+    
+    def add_production_goto(self, item, result, symbol):
+        production = item[0]
+        production_pos = item[1]
+        body = production.body
+        if len(body) > production_pos + 1:
+            if body[production_pos + 1] == symbol:
+                result.add((production, production_pos + 1))
+        return result
+    
+    def goto(self, I, symbol):
+        result = set()
+        for element in I:
+            result = self.add_production_goto(element, result, symbol)
+
+        return result
+    
+    def add_dot(self, body, dot_pos):
+        acu = ""
+        for i in range(len(body)):
+            element = body[i]
+            if i == dot_pos:
+                acu += "•" + element + " "
+            else:
+                acu += element + " "
+        acu = acu[:-1]
+        if dot_pos == len(body):
+            acu += "•"
+        return acu
+    
+    def __repr__(self) -> str:
+        closure = self.closure()
+        body = set(closure) - set(self.heart)
+        res = "I" + str(self.number)
+        res += "\nHeart\n"
+
+        for item in list(self.heart):
+            production = item[0]
+            dot_pos = item[1] + 1
+            head, body_prod = production.get_attributes()
+            acu = head + " => " + self.add_dot(body_prod, dot_pos)
+            res += acu + '\n'
+        if len(body) > 0:
+            res += "\nBody\n"
+            for item in list(body):
+                production = item[0]
+                dot_pos = item[1] + 1
+                head, body_prod = production.get_attributes()
+                acu = head + " => " + self.add_dot(body_prod, dot_pos)
+                res += acu + '\n'
+        res = res[:-1]
+        
+        return res
+        
+
+
+import graphviz
+
+class LRAutomaton(object):
+    def __init__(self, grammar) -> None:
+        self.states = set()
+        self.transitions = {}
+        self.start_state = None
+        self.grammar = grammar
+        self.grammar_symbols = list(grammar.grammar_symbols)
+        self.state_counter = 0
+        self.items = {}
+
+    def get_state_id(self, state):
+        return self.items[state].number
+    
+    def create_state(self, state, item):
+        state = frozenset(state)
+        self.states.add(state)
+        self.transitions[state] = ['' for _ in range(len(self.grammar_symbols))]
+        self.items[state] = item
+        item.number = self.state_counter
+        self.state_counter += 1
+
+    def create_transition(self, state, new_state, symbol):
+        state = frozenset(state)
+        new_state = frozenset(new_state)
+        # state_id = self.states[state]
+        # new_state_id = self.states[new_state]
+        symbol_index = self.get_symbol_index(symbol)
+        self.transitions[state][symbol_index] = new_state
+
+    def get_symbol_index(self, symbol):
+        if symbol in self.grammar_symbols:
+            return self.grammar_symbols.index(symbol)
+        return None
+
+    # TODO: tengo que tener un diccionario con los indices asociados a los items para luego usar en la pila (ejemplo de Carlos).
+    def build(self):
+        items = SetOfItems(self.grammar)
+        first_production = self.grammar.first_production
+
+        items.set_heart([(first_production, -1)])
+        state = items.heart.copy()
+        self.create_state(state, items)
+
+        self.first_state = state
+
+        self.pending_states = [state]
+
+        while self.pending_states:
+            state = self.pending_states.pop(0)
+            items = self.items[frozenset(state)]
+            closure = items.closure().copy()
+            for symbol in self.grammar_symbols:
+                new_state = items.goto(closure, symbol).copy()
+                temp = frozenset(new_state)
+                if len(new_state) > 0:
+                    if temp not in self.transitions:
+                        items = SetOfItems(self.grammar)
+                        items.heart = new_state
+                        self.create_state(new_state, items)
+                        self.pending_states.append(new_state)
+                    self.create_transition(state, new_state, symbol)
+
+    def visualize(self):
+        self.visual_graph = graphviz.Digraph(format='png', graph_attr={'rankdir':'LR'}, name="LRAutomaton")
+        self.visual_graph.node('fake', style='invisible')
+        initial_prod = self.grammar.first_production
+        initial_prod = [(initial_prod, -1)]
+        self.initial_prod = frozenset(initial_prod)
+        initial_item = self.items[self.initial_prod]
+        self.bfs(initial_item.heart)
+        self.output_graph()
+
+    def bfs(self, first):
+        first = frozenset(first)
+        current_nodes = set()
+        visited = set()
+        queue = []
+        queue.append(first)
+        visited.add(first)
+
+        while queue:
+            state = queue.pop(0)
+            self.visit(state, current_nodes)
+            
+            for transition in self.transitions[state]:
+                if transition and transition != '':
+                    if transition not in visited:
+                        queue.append(transition)
+                        visited.add(transition)
+
+    def visit(self, state, current_nodes):
+        current_nodes.add(state)
+        item = self.items[state]
+        if state == self.initial_prod:
+            self.visual_graph.edge("fake", str(item), style="bold")
+            self.visual_graph.node(str(item), root="true", shape="rectangle")
+        else:
+            self.visual_graph.node(str(item), shape="rectangle")
+
+        transitions = self.transitions[state]
+        i = 0
+        for set in transitions:
+            if set:
+                item_receiver = self.items[set]
+                if set not in current_nodes:
+                    self.visual_graph.node(str(item_receiver), shape="rectangle")
+                    current_nodes.add(set)
+                
+                self.visual_graph.edge(str(item), str(item_receiver), label=str(self.grammar_symbols[i]))
+            i += 1       
+
+    def output_graph(self):
+        self.visual_graph.render(directory='output', view=False)
+
+    def get_acceptance_transition(self):
+        old_initial_head = self.grammar.old_first_production.head
+        index = self.get_symbol_index(old_initial_head)
+        target_state = self.transitions[frozenset(self.first_state)][index]
+        return self.items[target_state].number
+
+    def get_transitions_with_grammar_symbols(self, symbols):
+        resultant_transitions = {}
+        i = 0
+        for symbol in symbols:
+            index = self.get_symbol_index(symbol)
+            if index != None:
+                for state in self.transitions:
+                    transition = self.transitions[state][index]
+                    if transition != '':
+                        origin_set_id = self.items[state].number
+                        target_set_id = self.items[transition].number
+                        if origin_set_id not in resultant_transitions:
+                            resultant_transitions[origin_set_id] = ['' for _ in symbols]
+                        
+                        resultant_transitions[origin_set_id][i] = target_set_id
+            i += 1
+        
+        return resultant_transitions
+
 import pandas as pd
 from termcolor import colored
 
@@ -272,7 +583,7 @@ class SLR(object):
             raise Exception(error_msg)
         
         return self.accepted
-
+    
     def parse_next(self):
         symbol = self.latest_token.type if self.latest_token != '$' else self.latest_token
         index = self.get_terminal_index(symbol)
@@ -284,7 +595,8 @@ class SLR(object):
         peek = self.stack[-1]
         action_entry = self.actions_table[peek][index]
         if action_entry == '':
-            self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
+            if self.latest_token != '$':
+                self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
             self.latest_token = None
             return
         self.execute_action(action_entry)
@@ -319,3 +631,11 @@ class SLR(object):
 
 
         
+productions = [('expression', ['expression', 'PLUS', 'term']), ('expression', ['term']), ('term', ['term', 'TIMES', 'factor']), ('term', ['factor']), ('factor', ['LPAREN', 'expression', 'RPAREN']), ('factor', ['ID'])]
+tokens = ['ID', 'PLUS', 'TIMES', 'LPAREN', 'RPAREN']
+grammar = Grammar(productions)
+grammar.split_grammar_elements(tokens)
+slr = SLR(grammar)
+slr.build_LR_automaton()
+slr.build()
+slr.initialize_parse()

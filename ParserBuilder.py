@@ -1,16 +1,17 @@
 from Formatter import YalexFormatter
 from Reader import Reader
 from Grammar import Grammar
-from LRAutomaton import LRAutomaton
 from YaparFormatter import YaparFormatter
 from SLR import SLR
+import pickle
 
 class ParserBuilder(object):
     
-    def __init__(self, yapar, yalex) -> None:
+    def __init__(self, yapar, yalex, file) -> None:
         self.yalex_reader = Reader(yalex)
         self.yapar_reader = Reader(yapar)
         self.yalex_formatter = YalexFormatter()
+        self.file = file
 
     def get_token_names(self):
         yalex_content = self.yalex_reader.read()
@@ -88,3 +89,36 @@ class ParserBuilder(object):
     def parse(self):
         self.slr.initialize_parse()
         self.slr.parse()
+
+    def concat_files_needed(self):
+        files = ["Production", "Grammar", "SetOfItems", "LRAutomaton", "SLR"]
+        imports = ["from LRAutomaton import LRAutomaton", "from YaparErrorChecker import YaparErrorChecker", "from YalexErrorChecker import YalexErrorChecker", "from SetOfItems import SetOfItems", "from Production import Production"]
+        self.file_content = []
+        
+        for file in files:
+            with open(file + ".py", "rt") as archivo:
+                contenido = archivo.read()
+                for element in imports:
+                    contenido = contenido.replace(element, '')
+                self.file_content.append(contenido)
+    
+    def add_functionality(self):
+        productions = f"productions = {self.productions}"
+        self.file_content.append(productions)
+
+        tokens = f"tokens = {self.yapar_formatter.tokens}"
+        self.file_content.append(tokens)
+
+        self.file_content.append("grammar = Grammar(productions)")
+        self.file_content.append("grammar.split_grammar_elements(tokens)")
+        self.file_content.append("slr = SLR(grammar)")
+        self.file_content.append("slr.build_LR_automaton()")
+        self.file_content.append("slr.build()")
+        self.file_content.append("slr.initialize_parse()")
+
+    def write_to_file(self):
+        with open(self.file, "wt") as file:
+            for content in self.file_content:
+                file.write(content + '\n')
+        
+        print("Archivo generado: ", f"{self.file}")

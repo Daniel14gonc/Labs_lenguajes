@@ -68,7 +68,7 @@ class LexerBuilder(object):
                    "from RegexErrorChecker import RegexErrorChecker", "from AFVisual import AFVisual", 
                    "from FA import FA", "from DFA import DFA",
                    "from AST import AST", "from STNode import STNode", "from FAErrorChecker import FAErrorChecker",
-                   "from NFA import NFA", "from TokenLex import TokenLex"]
+                   "from NFA import NFA", "from TokenLex import TokenLex", "from Reader import Reader"]
         
         for file in files:
             with open(file + ".py", "rt") as archivo:
@@ -128,17 +128,8 @@ class LexerBuilder(object):
         # self.functionality.append(token_evaluation) 
 
         text = """
-        import sys
-
-        args = sys.argv
-
-        path = None
-        if len(args) > 1: 
-            path = args[1]
-        else:
-            raise Exception("Source code not specified.")
         tokenizer.set_actions(actions)
-        tokenizer.read_source_code(path)
+        # tokenizer.read_source_code(path)
         # tokenizer.initialize_token_recognition()
         # while tokenizer.has_next_token():
         #     print(tokenizer.next_token())
