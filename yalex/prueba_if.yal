@@ -1,0 +1,24 @@
+(* Ejemplo básico *)
+
+let delimitador = [' ''\t''\n']
+let espacioEnBlanco = delimitador+
+let digito = ['0'-'9']
+let numero = '-'?digito+
+let hex = "'0x'"digito+
+let letra = ['a'-'Z''A'-'Z']
+let identificador = letra(letra|numero)+
+
+rule tokens =
+	espacioEnBlanco	{}
+  | 'if'				{ RETURN IF }
+  | 'else'				{ RETURN ELSE }
+  | 'then'				{ RETURN THEN }
+  | identificador	{ RETURN ID }
+  | numero			{ RETURN NUMBER }
+  | '=='				{ RETURN EQUALS }
+  | '!='				{ RETURN NOT_EQUALS }
+  | '>'				{ RETURN GREATER }
+  | '<'				{ RETURN LESS }
+  | '>='				{ RETURN GREATER_EQUALS }
+  | '<='				{ RETURN LESS_EQUALS }
+

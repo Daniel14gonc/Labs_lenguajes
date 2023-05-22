@@ -1,0 +1,4 @@
+rule tokens = 
+    'a'        {return A}
+    | 'b'        {return B}
+    | 'c'        {return C}

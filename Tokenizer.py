@@ -156,9 +156,12 @@ class Tokenizer(NFA):
     
     def get_new_token(self, content, line, position):
         content = content.replace('return', '')
+        content = content.replace('RETURN', '')
         content = content.replace("'", '')
         content = content.replace('"', '')
         content = content.strip()
+        if content == '':
+            content = 'IGNORE'
         return TokenLex(content, line, position)
 
 

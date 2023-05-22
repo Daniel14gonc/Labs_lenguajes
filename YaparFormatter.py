@@ -52,6 +52,9 @@ class YaparFormatter(object):
 
     def create_tokens(self):
         self.get_tokens(self.token_content)
+
+    def get_tokens_to_ignore(self):
+        return self.ignore
     
     def get_tokens(self, token_section):
         self.tokens = []

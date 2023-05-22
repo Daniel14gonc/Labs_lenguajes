@@ -323,6 +323,7 @@ class SLR(object):
         self.follow_set = {}
         self.actions_table = {}
         self.goto_table = {}
+        self.ignore_tokens = []
 
     def calculate_first_and_follow(self):
         self.calculate_first()
@@ -539,6 +540,7 @@ class SLR(object):
         self.symbol_stack = []
         self.latest_token = None
         self.errors = []
+        self.error_empty_string = False
 
     def set_latest_token(self, token):
         self.latest_token = token
@@ -560,10 +562,9 @@ class SLR(object):
         self.accepted = False
         while lexer.has_next_token():
             if self.need_next_token():
-                while self.latest_token == None or self.latest_token.type == '':
-                    self.latest_token = lexer.next_token()
+                self.latest_token = lexer.next_token()
             self.parse_next()
-        while len(self.stack) > 1 and not self.accepted:
+        while len(self.stack) > 1 and not self.accepted and not self.error_empty_string:
             if self.latest_token == None:
                 self.latest_token = '$'
             self.parse_next()
@@ -583,23 +584,29 @@ class SLR(object):
             raise Exception(error_msg)
         
         return self.accepted
-    
+
     def parse_next(self):
         symbol = self.latest_token.type if self.latest_token != '$' else self.latest_token
-        index = self.get_terminal_index(symbol)
-        if index == None:
-            if self.latest_token.type != 'ERROR':
-                self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
+        if symbol != 'IGNORE' and symbol not in self.ignore_tokens:
+            index = self.get_terminal_index(symbol)
+            if index == None:
+                if self.latest_token.type != 'ERROR':
+                    self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
+                self.latest_token = None
+                return
+            peek = self.stack[-1]
+            action_entry = self.actions_table[peek][index]
+            if action_entry == '':
+                if self.latest_token != '$':
+                    self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
+                else:
+                    self.errors.append(f'Error at end of file. Expression missing\n')
+                    self.error_empty_string = True
+                self.latest_token = None
+                return
+            self.execute_action(action_entry)
+        else:
             self.latest_token = None
-            return
-        peek = self.stack[-1]
-        action_entry = self.actions_table[peek][index]
-        if action_entry == '':
-            if self.latest_token != '$':
-                self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
-            self.latest_token = None
-            return
-        self.execute_action(action_entry)
 
         
     def execute_action(self, action_entry):
@@ -616,6 +623,14 @@ class SLR(object):
                 production = self.grammar.get_production_by_index(state)
                 head, body = production.get_attributes()
                 elements_to_pop = len(body)
+                if elements_to_pop > len(self.stack):
+                    if self.latest_token != '$':
+                        self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
+                    else:
+                        self.errors.append(f'Error at end of file. Expression missing\n')
+                        self.error_empty_string = True
+                    self.latest_token = None
+                    return
                 for _ in range(elements_to_pop):
                     self.symbol_stack.pop()
                     self.stack.pop()
@@ -631,11 +646,13 @@ class SLR(object):
 
 
         
-productions = [('expression', ['expression', 'PLUS', 'term']), ('expression', ['term']), ('term', ['term', 'TIMES', 'factor']), ('term', ['factor']), ('factor', ['LPAREN', 'expression', 'RPAREN']), ('factor', ['ID'])]
-tokens = ['ID', 'PLUS', 'TIMES', 'LPAREN', 'RPAREN']
+productions = [('expression', ['expression', 'PLUS', 'term']), ('expression', ['expression', 'MINUS', 'term']), ('expression', ['term']), ('term', ['term', 'TIMES', 'factor']), ('term', ['term', 'DIV', 'factor']), ('term', ['factor']), ('factor', ['LPAREN', 'expression', 'RPAREN']), ('factor', ['ID']), ('factor', ['NUMBER'])]
+tokens = ['ID', 'PLUS', 'MINUS', 'TIMES', 'DIV', 'NUMBER', 'LPAREN', 'RPAREN']
+ignore_tokens = ['WHITESPACE']
 grammar = Grammar(productions)
 grammar.split_grammar_elements(tokens)
 slr = SLR(grammar)
 slr.build_LR_automaton()
 slr.build()
+slr.ignore_tokens = ignore_tokens
 slr.initialize_parse()

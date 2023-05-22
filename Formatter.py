@@ -542,6 +542,7 @@ class YalexFormatter(object):
             name = element[1]
             if name and not self.check_is_blank(name):
                 name = name.replace('return', '')
+                name = name.replace('RETURN', '')
                 name = name.strip()
                 if name[0] == "'":
                     name = name.replace("'", '')

@@ -52,7 +52,9 @@ class ParserBuilder(object):
     
     def compare_tokens(self):
         yalex_tokens = set(self.token_names)
-        yapar_tokens = set(self.tokens)
+        ignore_tokens = set(self.yapar_formatter.get_tokens_to_ignore())
+        yapar_tokens = set(self.tokens).union(ignore_tokens)
+        
         difference_yalex = yalex_tokens - yapar_tokens
         difference_yapar = yapar_tokens - yalex_tokens
         error = ''
@@ -109,11 +111,15 @@ class ParserBuilder(object):
         tokens = f"tokens = {self.yapar_formatter.tokens}"
         self.file_content.append(tokens)
 
+        ignore_tokens = f"ignore_tokens = {self.yapar_formatter.ignore}"
+        self.file_content.append(ignore_tokens)
+
         self.file_content.append("grammar = Grammar(productions)")
         self.file_content.append("grammar.split_grammar_elements(tokens)")
         self.file_content.append("slr = SLR(grammar)")
         self.file_content.append("slr.build_LR_automaton()")
         self.file_content.append("slr.build()")
+        self.file_content.append("slr.ignore_tokens = ignore_tokens")
         self.file_content.append("slr.initialize_parse()")
 
     def write_to_file(self):

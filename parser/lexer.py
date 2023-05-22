@@ -1241,9 +1241,12 @@ class Tokenizer(NFA):
     
     def get_new_token(self, content, line, position):
         content = content.replace('return', '')
+        content = content.replace('RETURN', '')
         content = content.replace("'", '')
         content = content.replace('"', '')
         content = content.strip()
+        if content == '':
+            content = 'IGNORE'
         return TokenLex(content, line, position)
 
 
@@ -1301,8 +1304,8 @@ class TokenLex(object):
     
     def __repr__(self) -> str:
         return self.type
-regexes = ['( |\t|\n)+','(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)((A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)|(0|1|2|3|4|5|6|7|8|9))*','\+','\*','\(','\)']
-actions_tokens = [(0, ''), (1, "return  'ID'"), (2, "return  'PLUS'"), (3, "return  'TIMES'"), (4, "return  'LPAREN'"), (5, "return  'RPAREN'")]
+regexes = ['( |\t|\n)+','(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)((A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)|(0|1|2|3|4|5|6|7|8|9))*','(0|1|2|3|4|5|6|7|8|9)++','\+','-','\*','/','\(','\)']
+actions_tokens = [(0, 'return WHITESPACE'), (1, 'return ID'), (2, 'return NUMBER'), (3, 'return PLUS'), (4, 'return MINUS'), (5, 'return TIMES'), (6, 'return DIV'), (7, 'return LPAREN'), (8, 'return RPAREN')]
 
 count = 1
 NFAs = []
