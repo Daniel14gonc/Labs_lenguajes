@@ -1,7 +1,0 @@
-rule tokens =
-	[' ' '\t' '\n']		{ }  (* ignorar espacios en blanco *)
-  |  ['0'-'9']+				{ print('int') }
-  | '+'								{ print("PLUS") }
-  | '-'								{ print("MINUS") }
-  | '*'								{ print("TIMES") }
-  | '/'								{ print("DIVIDE") }

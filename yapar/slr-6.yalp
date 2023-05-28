@@ -1,9 +1,0 @@
-%token ID NUMBER PLUS LPAREN RPAREN WS
-IGNORE WS
-
-%%
-
-s: a c b | c NUMBER NUMBER | b ID;
-a: PLUS ID | b c;
-b: LPAREN | ε;
-c: RPAREN | ε;
