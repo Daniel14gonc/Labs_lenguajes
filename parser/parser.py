@@ -92,8 +92,12 @@ class SetOfItems(object):
                     if production not in productions_visited:
                         head = production.head
                         if head == next_element:
-                            closure.append((production, -1))
-                            self.stack.append((production, -1))
+                            if production.body[0] == 'ε':
+                                closure.append((production, 0))
+                                self.stack.append((production, 0))
+                            else:
+                                closure.append((production, -1))
+                                self.stack.append((production, -1))
                             productions_visited.add(production)
         return closure
 
@@ -233,6 +237,15 @@ class LRAutomaton(object):
                         self.pending_states.append(new_state)
                     self.create_transition(state, new_state, symbol)
 
+    def get_items(self):
+        response = []
+        for key in self.items:
+            item = self.items[key]
+            state_id = self.get_state_id(key)
+            response.append((state_id, item.closure()))
+
+        return response
+    
     def visualize(self):
         self.visual_graph = graphviz.Digraph(format='png', graph_attr={'rankdir':'LR'}, name="LRAutomaton")
         self.visual_graph.node('fake', style='invisible')
@@ -489,9 +502,9 @@ class SLR(object):
                 i += 1
 
     def add_reduce(self):
-        states = self.automaton.states
-        for state in states:
-            state_id = self.automaton.get_state_id(state)
+        items = self.automaton.get_items()
+        for item in items:
+            state_id, state = item
             self.add_entry(state_id)
             for element in state:
                 production = element[0]
@@ -501,9 +514,15 @@ class SLR(object):
                 if body_len == dot_pointer + 1:
                     follow_for_head = self.follow_set[head]
                     production_index = self.grammar.index_of(production)
+                    # print(head, follow_for_head, state_id)
                     for terminal in follow_for_head:
                         symbol_index = self.terminals_with_dollar.index(terminal)
                         if self.actions_table[state_id][symbol_index] != 'acc':
+                            if self.actions_table[state_id][symbol_index] != '':
+                                if self.actions_table[state_id][symbol_index][0] == 's':
+                                    raise Exception('Error: Grammar has shift-reduction conflict.')
+                                elif self.actions_table[state_id][symbol_index][0] == 'r':
+                                    raise Exception('Error: Grammar has reduction-reduction conflict.')
                             self.actions_table[state_id][symbol_index] = ('r', production_index)
 
     def build_actions_table(self):
@@ -583,7 +602,10 @@ class SLR(object):
         if error_msg != '':
             raise Exception(error_msg)
         
-        return self.accepted
+        if self.accepted:
+            return colored("La cadena ha sido aceptada al parsearla.", "green")
+        
+        return "La cadena no ha sido aceptada al parsearla."
 
     def parse_next(self):
         symbol = self.latest_token.type if self.latest_token != '$' else self.latest_token
@@ -608,6 +630,13 @@ class SLR(object):
         else:
             self.latest_token = None
 
+    def get_body_size(self, body):
+        count = 0
+        for element in body:
+            if element != 'ε':
+                count += 1
+
+        return count
         
     def execute_action(self, action_entry):
         if len(action_entry) == 2:
@@ -622,7 +651,7 @@ class SLR(object):
             elif action == 'r':
                 production = self.grammar.get_production_by_index(state)
                 head, body = production.get_attributes()
-                elements_to_pop = len(body)
+                elements_to_pop = self.get_body_size(body)
                 if elements_to_pop > len(self.stack):
                     if self.latest_token != '$':
                         self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')
@@ -646,9 +675,9 @@ class SLR(object):
 
 
         
-productions = [('expression', ['expression', 'PLUS', 'term']), ('expression', ['expression', 'MINUS', 'term']), ('expression', ['term']), ('term', ['term', 'TIMES', 'factor']), ('term', ['term', 'DIV', 'factor']), ('term', ['factor']), ('factor', ['LPAREN', 'expression', 'RPAREN']), ('factor', ['ID']), ('factor', ['NUMBER'])]
-tokens = ['ID', 'PLUS', 'MINUS', 'TIMES', 'DIV', 'NUMBER', 'LPAREN', 'RPAREN']
-ignore_tokens = ['WHITESPACE']
+productions = [('expression', ['expression', 'PLUS', 'term']), ('expression', ['term']), ('term', ['term', 'TIMES', 'factor']), ('term', ['factor']), ('factor', ['LPAREN', 'expression', 'RPAREN']), ('factor', ['ID'])]
+tokens = ['ID', 'PLUS', 'TIMES', 'LPAREN', 'RPAREN']
+ignore_tokens = ['WS']
 grammar = Grammar(productions)
 grammar.split_grammar_elements(tokens)
 slr = SLR(grammar)

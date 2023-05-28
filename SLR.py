@@ -178,9 +178,9 @@ class SLR(object):
                 i += 1
 
     def add_reduce(self):
-        states = self.automaton.states
-        for state in states:
-            state_id = self.automaton.get_state_id(state)
+        items = self.automaton.get_items()
+        for item in items:
+            state_id, state = item
             self.add_entry(state_id)
             for element in state:
                 production = element[0]
@@ -190,6 +190,7 @@ class SLR(object):
                 if body_len == dot_pointer + 1:
                     follow_for_head = self.follow_set[head]
                     production_index = self.grammar.index_of(production)
+                    # print(head, follow_for_head, state_id)
                     for terminal in follow_for_head:
                         symbol_index = self.terminals_with_dollar.index(terminal)
                         if self.actions_table[state_id][symbol_index] != 'acc':
@@ -277,7 +278,10 @@ class SLR(object):
         if error_msg != '':
             raise Exception(error_msg)
         
-        return self.accepted
+        if self.accepted:
+            return colored("La cadena ha sido aceptada al parsearla.", "green")
+        
+        return colored("La cadena no ha sido aceptada al parsearla.", "red")
 
     def parse_next(self):
         symbol = self.latest_token.type if self.latest_token != '$' else self.latest_token
@@ -302,6 +306,13 @@ class SLR(object):
         else:
             self.latest_token = None
 
+    def get_body_size(self, body):
+        count = 0
+        for element in body:
+            if element != 'ε':
+                count += 1
+
+        return count
         
     def execute_action(self, action_entry):
         if len(action_entry) == 2:
@@ -316,7 +327,7 @@ class SLR(object):
             elif action == 'r':
                 production = self.grammar.get_production_by_index(state)
                 head, body = production.get_attributes()
-                elements_to_pop = len(body)
+                elements_to_pop = self.get_body_size(body)
                 if elements_to_pop > len(self.stack):
                     if self.latest_token != '$':
                         self.errors.append(f'Error on token {colored(self.latest_token, "blue")} on line {self.latest_token.line} at position {self.latest_token.position}\n')

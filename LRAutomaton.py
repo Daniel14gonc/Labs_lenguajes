@@ -63,6 +63,15 @@ class LRAutomaton(object):
                         self.pending_states.append(new_state)
                     self.create_transition(state, new_state, symbol)
 
+    def get_items(self):
+        response = []
+        for key in self.items:
+            item = self.items[key]
+            state_id = self.get_state_id(key)
+            response.append((state_id, item.closure()))
+
+        return response
+    
     def visualize(self):
         self.visual_graph = graphviz.Digraph(format='png', graph_attr={'rankdir':'LR'}, name="LRAutomaton")
         self.visual_graph.node('fake', style='invisible')

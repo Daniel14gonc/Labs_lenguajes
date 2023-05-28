@@ -98,7 +98,7 @@ class ParserBuilder(object):
         self.file_content = []
         
         for file in files:
-            with open(file + ".py", "rt") as archivo:
+            with open(file + ".py", "rt", encoding='utf-8') as archivo:
                 contenido = archivo.read()
                 for element in imports:
                     contenido = contenido.replace(element, '')
@@ -123,7 +123,7 @@ class ParserBuilder(object):
         self.file_content.append("slr.initialize_parse()")
 
     def write_to_file(self):
-        with open(self.file, "wt") as file:
+        with open(self.file, "wt", encoding='UTF-8') as file:
             for content in self.file_content:
                 file.write(content + '\n')
         

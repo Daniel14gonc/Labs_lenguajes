@@ -30,8 +30,12 @@ class SetOfItems(object):
                     if production not in productions_visited:
                         head = production.head
                         if head == next_element:
-                            closure.append((production, -1))
-                            self.stack.append((production, -1))
+                            if production.body[0] == 'ε':
+                                closure.append((production, 0))
+                                self.stack.append((production, 0))
+                            else:
+                                closure.append((production, -1))
+                                self.stack.append((production, -1))
                             productions_visited.add(production)
         return closure
 

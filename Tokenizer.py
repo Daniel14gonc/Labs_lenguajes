@@ -154,7 +154,7 @@ class Tokenizer(NFA):
     def has_next_token(self):
         return self.initial < len(self.source_code)
     
-    def get_new_token(self, content, line, position):
+    def get_new_token(self, content, line, position, value):
         content = content.replace('return', '')
         content = content.replace('RETURN', '')
         content = content.replace("'", '')
@@ -162,7 +162,7 @@ class Tokenizer(NFA):
         content = content.strip()
         if content == '':
             content = 'IGNORE'
-        return TokenLex(content, line, position)
+        return TokenLex(content, line, position, value)
 
 
     def next_token(self):
@@ -179,6 +179,7 @@ class Tokenizer(NFA):
         token = None
         while has_transitions and self.advance < len(self.source_code):
             symbol = self.source_code[self.advance]
+            acu += symbol
             self.simulate_symbol(symbol)
             accepted = self.is_accepted()
             has_transitions = self.has_transitions()
@@ -189,7 +190,6 @@ class Tokenizer(NFA):
                 line_count = 0
                 latest_pos = self.advance + 1
             else:
-                acu += symbol
                 count += 1
                 if symbol == '\n':
                     line_count += 1
@@ -203,11 +203,11 @@ class Tokenizer(NFA):
 
         self.line_pos -= count
         if self.latest_token != None:
-            token = self.get_new_token(self.latest_token, self.line, self.line_pos)
+            token = self.get_new_token(self.latest_token, self.line, self.line_pos, acu)
         else:
             latest_pos = self.advance
             self.token_errors.append(f"Lexical error on line {self.line} at position {self.line_pos}, element {colored(acu, 'green')}\n")
-            token = self.get_new_token('ERROR', self.line, self.line_pos)
+            token = self.get_new_token('ERROR', self.line, self.line_pos, acu)
         self.initial = latest_pos
 
         return token

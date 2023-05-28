@@ -1239,7 +1239,7 @@ class Tokenizer(NFA):
     def has_next_token(self):
         return self.initial < len(self.source_code)
     
-    def get_new_token(self, content, line, position):
+    def get_new_token(self, content, line, position, value):
         content = content.replace('return', '')
         content = content.replace('RETURN', '')
         content = content.replace("'", '')
@@ -1247,7 +1247,7 @@ class Tokenizer(NFA):
         content = content.strip()
         if content == '':
             content = 'IGNORE'
-        return TokenLex(content, line, position)
+        return TokenLex(content, line, position, value)
 
 
     def next_token(self):
@@ -1264,6 +1264,7 @@ class Tokenizer(NFA):
         token = None
         while has_transitions and self.advance < len(self.source_code):
             symbol = self.source_code[self.advance]
+            acu += symbol
             self.simulate_symbol(symbol)
             accepted = self.is_accepted()
             has_transitions = self.has_transitions()
@@ -1274,7 +1275,6 @@ class Tokenizer(NFA):
                 line_count = 0
                 latest_pos = self.advance + 1
             else:
-                acu += symbol
                 count += 1
                 if symbol == '\n':
                     line_count += 1
@@ -1288,24 +1288,25 @@ class Tokenizer(NFA):
 
         self.line_pos -= count
         if self.latest_token != None:
-            token = self.get_new_token(self.latest_token, self.line, self.line_pos)
+            token = self.get_new_token(self.latest_token, self.line, self.line_pos, acu)
         else:
             latest_pos = self.advance
             self.token_errors.append(f"Lexical error on line {self.line} at position {self.line_pos}, element {colored(acu, 'green')}\n")
-            token = self.get_new_token('ERROR', self.line, self.line_pos)
+            token = self.get_new_token('ERROR', self.line, self.line_pos, acu)
         self.initial = latest_pos
 
         return token
 class TokenLex(object):
-    def __init__(self, type, line, position) -> None:
+    def __init__(self, type, line, position, value) -> None:
         self.type = type
         self.line = line
         self.position = position
+        self.value = value
     
     def __repr__(self) -> str:
-        return self.type
-regexes = ['( |\t|\n)+','(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)((A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)|(0|1|2|3|4|5|6|7|8|9))*','(0|1|2|3|4|5|6|7|8|9)++','\+','-','\*','/','\(','\)']
-actions_tokens = [(0, 'return WHITESPACE'), (1, 'return ID'), (2, 'return NUMBER'), (3, 'return PLUS'), (4, 'return MINUS'), (5, 'return TIMES'), (6, 'return DIV'), (7, 'return LPAREN'), (8, 'return RPAREN')]
+        return self.type + ": " + self.value
+regexes = ['( |\t|\n)+','(A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)((A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z|a|b|c|d|e|f|g|h|i|j|k|l|m|n|o|p|q|r|s|t|u|v|w|x|y|z)|(0|1|2|3|4|5|6|7|8|9))*','\+','\*','\(','\)']
+actions_tokens = [(0, "return  'WS'"), (1, "return  'ID'"), (2, "return  'PLUS'"), (3, "return  'TIMES'"), (4, "return  'LPAREN'"), (5, "return  'RPAREN'")]
 
 count = 1
 NFAs = []
