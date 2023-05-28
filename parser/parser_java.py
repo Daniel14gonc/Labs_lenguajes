@@ -529,9 +529,9 @@ class SLR(object):
         self.add_acceptance_transition()
         self.add_shifts()
         self.add_reduce()
-        sorted_dict = dict(sorted(self.actions_table.items()))
-        df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.terminals_with_dollar)
-        print(df)
+        # sorted_dict = dict(sorted(self.actions_table.items()))
+        # df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.terminals_with_dollar)
+        # print(df)
 
     def build_goto_table(self):
         transitions = self.automaton.get_transitions_with_grammar_symbols(self.non_terminals)
@@ -544,9 +544,9 @@ class SLR(object):
                     self.goto_table[set_id][i] = goto
                 i += 1
         
-        sorted_dict = dict(sorted(self.goto_table.items()))
-        df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.non_terminals)
-        print(df)
+        # sorted_dict = dict(sorted(self.goto_table.items()))
+        # df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.non_terminals)
+        # print(df)
     
     def build(self):
         self.calculate_first_and_follow()
@@ -675,8 +675,8 @@ class SLR(object):
 
 
         
-productions = [('expression', ['term', 'expressionp']), ('expressionp', ['PLUS', 'term', 'expressionp']), ('expressionp', ['ε']), ('term', ['factor', 'termp']), ('termp', ['TIMES', 'factor', 'termp']), ('termp', ['ε']), ('factor', ['LPAREN', 'expression', 'RPAREN']), ('factor', ['ID'])]
-tokens = ['ID', 'PLUS', 'TIMES', 'LPAREN', 'RPAREN']
+productions = [('if_statement', ['IF', 'LPAREN', 'expression', 'RPAREN', 'block']), ('expression', ['logical_expression']), ('logical_expression', ['operand', 'logical_operator', 'operand']), ('operand', ['variable']), ('operand', ['value']), ('logical_operator', ['AND']), ('logical_operator', ['OR']), ('logical_operator', ['GT']), ('logical_operator', ['LT']), ('logical_operator', ['GE']), ('logical_operator', ['LE']), ('logical_operator', ['EQ']), ('variable', ['ID']), ('value', ['INTEGER']), ('value', ['FLOAT']), ('value', ['BOOLEAN']), ('block', ['LKEY', 'statement_list', 'RKEY']), ('statement_list', ['statement', 'statement_list_tail']), ('statement_list_tail', ['statement', 'statement_list_tail']), ('statement_list_tail', ['ε']), ('statement', ['if_statement']), ('statement', ['assignment_statement']), ('assignment_statement', ['variable', 'ASSIGN', 'value', 'SEMICOLON'])]
+tokens = ['IF', 'LPAREN', 'RPAREN', 'LKEY', 'RKEY', 'ID', 'INTEGER', 'FLOAT', 'BOOLEAN', 'ASSIGN', 'SEMICOLON', 'AND', 'OR', 'GT', 'LT', 'GE', 'LE', 'EQ']
 ignore_tokens = ['WS']
 grammar = Grammar(productions)
 grammar.split_grammar_elements(tokens)

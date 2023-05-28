@@ -75,23 +75,30 @@ class YalexErrorChecker(object):
         stack_curly_brackets = []
         stack_square_brackets = []
         content = self.file_content.split("\n")
+        single = 0
+        double = 0
         i = 1
         for line in content:
             for element in line:
-                if element == '[':
-                    stack_square_brackets.append(element)
-                if element == '{':
-                    stack_curly_brackets.append(element)
-                if element == ']':
-                    if stack_square_brackets:
-                        stack_square_brackets.pop()
-                    else:
-                        self.errors.append(f"Error at line {i}: square brackets mismatch.\n")
-                if element == '}':
-                    if stack_curly_brackets:
-                        stack_curly_brackets.pop()
-                    else:
-                        self.errors.append(f"Error at line {i}: curly brackets mismatch.\n")
+                if element == '"' and single % 2 == 0:
+                    double += 1
+                elif element == "'" and double % 2 == 0:
+                    single += 1
+                elif single % 2 == 0 and double % 2 == 0:
+                    if element == '[':
+                        stack_square_brackets.append(element)
+                    if element == '{':
+                        stack_curly_brackets.append(element)
+                    if element == ']':
+                        if stack_square_brackets:
+                            stack_square_brackets.pop()
+                        else:
+                            self.errors.append(f"Error at line {i}: square brackets mismatch.\n")
+                    if element == '}':
+                        if stack_curly_brackets:
+                            stack_curly_brackets.pop()
+                        else:
+                            self.errors.append(f"Error at line {i}: curly brackets mismatch.\n")
         if stack_square_brackets:
             self.errors.append("Error: square brackets mismatch.\n")
         if stack_curly_brackets:

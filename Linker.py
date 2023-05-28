@@ -18,7 +18,7 @@ content.append(f'tokenizer.read_source_code(input_file)')
 content.append('tokenizer.initialize_token_recognition()')
 content.append('print(slr.parse(tokenizer))')
 
-with open(f'./parser/{executable}', "wt") as file:
+with open(executable, "wt") as file:
     for content in content:
         file.write(content + '\n')
         

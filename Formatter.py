@@ -27,10 +27,11 @@ class YalexFormatter(object):
         formatter_funcs = [self.clean_comments, self.build_header, self.build_trailer, 
                            self.replace_quotation_mark, self.build_regex, self.build_tokens]
         for func in formatter_funcs:
-            try:
-                func()
-            except:
-                pass
+            func()
+            # try:
+            #     func()
+            # except:
+            #     pass
 
         # self.build_header()
         # self.clean_comments()
@@ -124,7 +125,7 @@ class YalexFormatter(object):
                 quotes += 1
             if element == '"' and quotes % 2 == 0:
                 double += 1
-            if element == '{':
+            if element == '{' and quotes % 2 == 0 and double % 2 == 0:
                 inside_code = True
             elif element == '}' and quotes % 2 == 0 and double % 2 == 0:
                 inside_code = False
@@ -164,6 +165,7 @@ class YalexFormatter(object):
         expression = expression.replace('.', '\.')
         expression = expression.replace('+', '\+')
         expression = expression.replace('*', '\*')
+        expression = expression.replace('|', '\|')
         expression = expression.replace('"', '')
         expression = expression.replace("'", "")
         expression = expression.replace("(", "\(")
@@ -284,6 +286,7 @@ class YalexFormatter(object):
                         element = element.replace('"', "")
                     element = element.replace('+', '\+')
                     element = element.replace('.', '\.')
+                    element = element.replace('|', '\|')
                     element = element.replace('*', '\*')
                     element = element.replace('(', '\(')
                     element = element.replace(')', '\)')
