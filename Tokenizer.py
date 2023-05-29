@@ -202,6 +202,7 @@ class Tokenizer(NFA):
                     self.line_pos = -1
 
         self.line_pos -= count
+        acu = acu[:-1]
         if self.latest_token != None:
             token = self.get_new_token(self.latest_token, self.line, self.line_pos, acu)
         else:
