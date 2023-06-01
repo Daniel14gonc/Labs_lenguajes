@@ -18,6 +18,11 @@ class SLR(object):
         self.calculate_first()
         self.calculate_follow()
 
+        print('------------First------------')
+        print(self.first_set)
+        print('\n------------Follow------------')
+        print(self.follow_set)
+
     def calculate_first(self):
         productions = self.grammar.productions
         for terminal in self.terminals:
@@ -205,9 +210,10 @@ class SLR(object):
         self.add_acceptance_transition()
         self.add_shifts()
         self.add_reduce()
-        # sorted_dict = dict(sorted(self.actions_table.items()))
-        # df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.terminals_with_dollar)
-        # print(df)
+        print('------------Actions table------------')
+        sorted_dict = dict(sorted(self.actions_table.items()))
+        df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.terminals_with_dollar)
+        print(df)
 
     def build_goto_table(self):
         transitions = self.automaton.get_transitions_with_grammar_symbols(self.non_terminals)
@@ -219,10 +225,10 @@ class SLR(object):
                 if goto != '':
                     self.goto_table[set_id][i] = goto
                 i += 1
-        
-        # sorted_dict = dict(sorted(self.goto_table.items()))
-        # df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.non_terminals)
-        # print(df)
+        print('\n------------Goto table------------')
+        sorted_dict = dict(sorted(self.goto_table.items()))
+        df = pd.DataFrame.from_dict(sorted_dict, orient='index', columns=self.non_terminals)
+        print(df)
     
     def build(self):
         self.calculate_first_and_follow()
